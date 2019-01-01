@@ -1,0 +1,425 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{543908CD-A0A8-476E-9B9D-C31CC31AE84E}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>Damdai.Forms</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Damdai.Forms</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <SignAssembly>false</SignAssembly>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\RELEASE\</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>none</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\RELEASE\</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Design">
+      <Name>System.Design</Name>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AutoCompleteForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialog.Designer.cs">
+      <DependentUpon>Dialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EXComboBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EXListView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ListView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ObjectListEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ObjectListEditor.designer.cs">
+      <DependentUpon>ObjectListEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DynamicPropertyGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="RichTextBoxEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Configuration\ConfiguredHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Configuration\Highlighter.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\HighlighterBase.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\HighlighterCollection.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\CHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\CobolHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\ColdFusionHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\CPPHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\CSharpHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\CSSHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\EiffelHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\FortranHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\HaskellHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\JavaHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\JavaScriptHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\JScriptHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\LuaHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\MercuryHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\MSILHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\PascalHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\PerlHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\PHPHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\PythonHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\RubyHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\SQLHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\VBHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\VBSHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Highlighter\Implementation\XMLHighlighter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\ASPX\ASPXNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\CommentBlock\CommentBlockNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\CommentBlock\Entity.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\CommentLine\CommentLineNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Css\CssAttributeNameNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Css\CssAttributeValueNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\EntityCollection.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\String\StringEntity.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\String\StringNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Word\WordNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\MatchEventArgs.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlAttributeNameNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlAttributeValueNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlCommentNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlNamespaceNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlSpecialCharNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Implementation\Xml\XmlTagNode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\INode.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\NodeBase.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\NodeCollection.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Occurrence\Occurrence.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Occurrence\OccurrenceCollection.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Node\Occurrence\OccurrenceEventArgs.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Parser\IParser.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Parser\ParserBase.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Parser\RtfParser.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Register.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\CommentBlockScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\CommentLineScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\CSS\CssScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\PHP\PHPScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\StringBlockScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\StringLineScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\WordScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\Implementation\XmlScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\IScanner.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\ScannerBase.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Scanner\ScannerCollection.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Tokenizer\CharTokenizer.cs" />
+    <Compile Include="SyntaxHighlighterEngine\Tokenizer\TokenizerBase.cs" />
+    <Compile Include="TabStrip\BaseClasses\BaseStyledPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="TabStrip\Control\FATabStrip.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="TabStrip\Control\FATabStripCloseButton.cs" />
+    <Compile Include="TabStrip\Control\FATabStripItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="TabStrip\Control\FATabStripItemCollection.cs" />
+    <Compile Include="TabStrip\Control\FATabStripMenuGlyph.cs" />
+    <Compile Include="TabStrip\Delegates.cs" />
+    <Compile Include="TabStrip\Design\FATabStripDesigner.cs" />
+    <Compile Include="TabStrip\Design\FATabStripItemDesigner.cs" />
+    <Compile Include="TabStrip\Design\ICaptionSupport.cs" />
+    <Compile Include="TabStrip\Enums.cs" />
+    <Compile Include="TabStrip\Helpers\CollectionWithEvents.cs" />
+    <Compile Include="TextEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="TextEditor.Designer.cs">
+      <DependentUpon>TextEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TextEditorWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TextEditorWindow.Designer.cs">
+      <DependentUpon>TextEditorWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Win32.cs" />
+    <Compile Include="Wizard\Header.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Wizard\HeaderDesigner.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\InfoContainer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Wizard\InfoContainerDesigner.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\InfoPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Wizard\InfoPageDesigner.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\PageCollection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\PageEventHandler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\Wizard.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Wizard\WizardDesigner.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Wizard\WizardPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Wizard\WizardPageDesigner.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <EmbeddedResource Include="AutoCompleteForm.resx">
+      <DependentUpon>AutoCompleteForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialog.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>Dialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ListView.resx">
+      <DependentUpon>ListView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ObjectListEditor.resx">
+      <DependentUpon>ObjectListEditor.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TextEditor.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>TextEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TextEditorWindow.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>TextEditorWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Wizard\Header.resx">
+      <DependentUpon>Header.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Wizard\InfoContainer.resx">
+      <DependentUpon>InfoContainer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Wizard\InfoPage.resx">
+      <DependentUpon>InfoPage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Wizard\Wizard.resx">
+      <DependentUpon>Wizard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Wizard\WizardPage.resx">
+      <DependentUpon>WizardPage.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\delete.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Damdai.Utils\Damdai.csproj">
+      <Project>{2D235B9A-CE35-4272-9D4D-C384BEFF935E}</Project>
+      <Name>Damdai</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TabStrip\FATabStrip.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>

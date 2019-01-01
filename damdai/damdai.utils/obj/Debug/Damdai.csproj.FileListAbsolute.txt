@@ -1,0 +1,10 @@
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\RELEASE\Damdai.dll
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\RELEASE\Damdai.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Utils\obj\Debug\Damdai.csprojResolveAssemblyReference.cache
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Utils\obj\Debug\Damdai.dll
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Utils\obj\Debug\Damdai.pdb
+C:\Users\Matthew\Dropbox\ultimud\Damdai\RELEASE\Damdai.dll
+C:\Users\Matthew\Dropbox\ultimud\Damdai\RELEASE\Damdai.pdb
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Utils\obj\Debug\Damdai.csprojResolveAssemblyReference.cache
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Utils\obj\Debug\Damdai.dll
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Utils\obj\Debug\Damdai.pdb

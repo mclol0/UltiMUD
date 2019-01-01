@@ -1,0 +1,36 @@
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\RELEASE\Damdai.Forms.dll
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\RELEASE\Damdai.Forms.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.csprojResolveAssemblyReference.cache
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.AutoCompleteForm.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Dialog.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.SubItemEventArgs.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.ObjectListEditor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Properties.Resources.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.TextEditor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.TextEditorWindow.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Header.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.InfoContainer.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.InfoPage.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Wizard.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.WizardPage.resources
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.csproj.GenerateResource.Cache
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.dll
+C:\Users\damdai\Documents\Visual Studio 2005\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.pdb
+C:\Users\Matthew\Dropbox\ultimud\Damdai\RELEASE\Damdai.Forms.dll
+C:\Users\Matthew\Dropbox\ultimud\Damdai\RELEASE\Damdai.Forms.pdb
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.csprojResolveAssemblyReference.cache
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.AutoCompleteForm.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Dialog.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.SubItemEventArgs.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.ObjectListEditor.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Properties.Resources.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.TextEditor.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.TextEditorWindow.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Header.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.InfoContainer.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.InfoPage.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.Wizard.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.WizardPage.resources
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.csproj.GenerateResource.Cache
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.dll
+C:\Users\Matthew\Dropbox\ultimud\Damdai\Damdai.Forms\obj\Debug\Damdai.Forms.pdb
