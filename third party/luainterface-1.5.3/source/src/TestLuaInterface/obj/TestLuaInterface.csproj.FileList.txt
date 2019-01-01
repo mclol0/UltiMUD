@@ -1,0 +1,5 @@
+..\..\..\Built\TestLua.exe
+..\..\..\Built\TestLua.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\TestLua.exe
+obj\Debug\TestLua.pdb

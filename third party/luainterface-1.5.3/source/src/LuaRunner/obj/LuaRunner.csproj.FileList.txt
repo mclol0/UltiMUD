@@ -1,0 +1,5 @@
+..\..\..\Built\LuaRunner.exe
+..\..\..\Built\LuaRunner.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\LuaRunner.exe
+obj\Debug\LuaRunner.pdb

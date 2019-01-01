@@ -1,0 +1,10 @@
+..\..\..\Built\LuaInterface.dll
+..\..\..\Built\LuaInterface.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\LuaInterface.dll
+obj\Debug\LuaInterface.pdb
+bin\Release\LuaInterface.dll
+bin\Release\LuaInterface.pdb
+obj\Release\ResolveAssemblyReference.cache
+obj\Release\LuaInterface.dll
+obj\Release\LuaInterface.pdb
