@@ -1,0 +1,38 @@
+SERVER: Initializing Ability
+SERVER: Initializing StatBlueprint
+SERVER: Initializing StatusEffectBlueprint
+SERVER: Initializing User
+SERVER: Initializing Command
+SERVER: Initializing Help
+SERVER: Initializing Item
+SERVER: Initializing Npc
+SERVER: Initializing AbilityGroup
+SERVER: Initializing Alias
+SERVER: Initializing Channel
+SERVER: Initializing Job
+SERVER: Initializing Script
+SERVER: Initializing MessageBoard
+SERVER: Initializing Race
+SERVER: Initializing Social
+SERVER: Initializing Tag
+SERVER: Post Initializing StatBlueprint
+SERVER: Post Initializing Help
+SERVER: Initializing Ability
+SERVER: Initializing StatBlueprint
+SERVER: Initializing StatusEffectBlueprint
+SERVER: Initializing User
+SERVER: Initializing Command
+SERVER: Initializing Help
+SERVER: Initializing Item
+SERVER: Initializing Npc
+SERVER: Initializing AbilityGroup
+SERVER: Initializing Alias
+SERVER: Initializing Channel
+SERVER: Initializing Job
+SERVER: Initializing Script
+SERVER: Initializing MessageBoard
+SERVER: Initializing Race
+SERVER: Initializing Social
+SERVER: Initializing Tag
+SERVER: Post Initializing StatBlueprint
+SERVER: Post Initializing Help

@@ -1,0 +1,443 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2A12C62A-DBA3-479D-83E5-7592D5CA349C}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>fire2.ico</ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>UltiMUD</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Ultimud</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>none</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.84.0.0, Culture=neutral, PublicKeyToken=1b03e6acf1164f73">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Third Party Objects\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Ability.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Actions\AbilityAction.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Server\Server.ObjectCollectionConverter.cs" />
+    <Compile Include="Actions\Action.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Area\Area.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AreaCanvas.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AreaCanvas.Designer.cs">
+      <DependentUpon>AreaCanvas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AreaEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AreaEditor.Designer.cs">
+      <DependentUpon>AreaEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FightSystems\AutomatedFightSystem.cs" />
+    <Compile Include="Settings\PvpSettings.cs" />
+    <Compile Include="Actions\FollowAction.cs" />
+    <Compile Include="IIdentifiable.cs" />
+    <Compile Include="FightSystems\IFightSystem.cs" />
+    <Compile Include="Settings\LevelUpSettings.cs" />
+    <Compile Include="Location.cs" />
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FlagEditor.cs" />
+    <Compile Include="FightSystems\ManualFightSystem.cs" />
+    <Compile Include="ObjectExplorer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ObjectExplorer.Designer.cs">
+      <DependentUpon>ObjectExplorer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reset.cs" />
+    <Compile Include="Server\ServerSettings.ChannelColorEditor.cs" />
+    <Compile Include="Character.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Area\Area.Exit.cs" />
+    <Compile Include="Area\Area.Layer.cs" />
+    <Compile Include="Area\Area.Map.cs" />
+    <Compile Include="Area\Area.Path.cs" />
+    <Compile Include="Area\Area.Region.cs" />
+    <Compile Include="Server\Server.SingleObjectSelector.cs" />
+    <Compile Include="Stats\StatBlueprint.cs" />
+    <Compile Include="Stats\StatCollectionConverter.cs" />
+    <Compile Include="Stats\StatFactor.cs" />
+    <Compile Include="Stats\StatModifier.cs" />
+    <Compile Include="Stats\StatsEditor.cs" />
+    <Compile Include="Stats\StatsEditorControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Stats\StatSelector.cs" />
+    <Compile Include="StatusEffect.cs" />
+    <Compile Include="StatusEffectBlueprint.cs" />
+    <Compile Include="StatusEffectSelector.cs" />
+    <Compile Include="String.cs" />
+    <Compile Include="StringEditor.cs" />
+    <Compile Include="User.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Command.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Help.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Item.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Menu.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Npc.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Object.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Actions\RecoverAction.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Server\Server.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Server\Settings.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Stats\Stat.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Telnet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Utils.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Actions\TravelAction.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <EmbeddedResource Include="AreaCanvas.resx">
+      <DependentUpon>AreaCanvas.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AreaEditor.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AreaEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BoundarySelector.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>BoundarySelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ObjectExplorer.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ObjectExplorer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PlayerMonitor.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>PlayerMonitor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserMonitor.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>UserMonitor.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AbilityGroup.cs" />
+    <Compile Include="Actions\CommandAction.cs" />
+    <Compile Include="Actions\DelayAction.cs" />
+    <Compile Include="Alias.cs" />
+    <Compile Include="Area\Area.Door.cs" />
+    <Compile Include="Area\Area.NpcRegion.cs" />
+    <Compile Include="Area\Area.Wall.cs" />
+    <Compile Include="AStarNode2D.cs" />
+    <Compile Include="BackgroundImageSettings.cs" />
+    <Compile Include="BoundarySelector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="BoundarySelector.Designer.cs">
+      <DependentUpon>BoundarySelector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Channel.cs" />
+    <Compile Include="CharacterAbilitySelector.cs" />
+    <Compile Include="FightSystems\TurnBasedFightSystem.cs" />
+    <Compile Include="ICloseable.cs" />
+    <Compile Include="ICommand.cs" />
+    <Compile Include="IContainer.cs" />
+    <Compile Include="IObject.cs" />
+    <Compile Include="ILocation.cs" />
+    <Compile Include="IPortal.cs" />
+    <Compile Include="ISaveable.cs" />
+    <Compile Include="ItemReset.cs" />
+    <Compile Include="Job.cs" />
+    <Compile Include="LocationSelector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocationSelector.Designer.cs">
+      <DependentUpon>LocationSelector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Player.cs" />
+    <Compile Include="PlayerMonitor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="PlayerMonitor.Designer.cs">
+      <DependentUpon>PlayerMonitor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Script.cs" />
+    <Compile Include="Server\Server.SerializationBinder.cs" />
+    <Compile Include="Settings\AbilitiesFormat.cs" />
+    <Compile Include="Settings\DeathSettings.cs" />
+    <Compile Include="Settings\EqFormat.cs" />
+    <Compile Include="Settings\Formatter.cs" />
+    <Compile Include="Settings\InfoChannel.cs" />
+    <Compile Include="Settings\LookFormat.cs" />
+    <Compile Include="MessageBoard.Post.cs" />
+    <Compile Include="MessageBoard.cs" />
+    <Compile Include="NpcReset.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Server\Server.MultiObjectSelector.cs" />
+    <Compile Include="Race.cs" />
+    <Compile Include="Server\Server.ObjectBlueprintSelector.cs" />
+    <Compile Include="Server\Server.IdToNameConverter.cs" />
+    <Compile Include="Settings\StatsFormat.cs" />
+    <Compile Include="Shop.cs" />
+    <Compile Include="Social.cs" />
+    <Compile Include="StoredSettings.cs" />
+    <Compile Include="StringTable.cs" />
+    <Compile Include="Tag.cs" />
+    <Compile Include="TextTrigger.cs" />
+    <Compile Include="UserMonitor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UserMonitor.Designer.cs">
+      <DependentUpon>UserMonitor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Vehicles\Vehicle.cs" />
+    <Compile Include="WeatherSystem.cs" />
+    <Compile Include="Settings\WhoFormat.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="images\new.bmp" />
+    <None Include="images\open.bmp" />
+    <None Include="images\stat2.bmp" />
+    <None Include="images\ability.bmp" />
+    <None Include="images\userBlack.bmp" />
+    <None Include="images\object2.bmp" />
+    <None Include="images\earth.bmp" />
+    <None Include="images\settings.png" />
+    <None Include="images\ability.png" />
+    <None Include="images\statuseffect.png" />
+    <None Include="images\openbook.png" />
+    <None Include="images\files.png" />
+    <None Include="images\stat.png" />
+    <None Include="images\abilitygroup.png" />
+    <None Include="images\man.png" />
+    <None Include="images\area.png" />
+    <None Include="images\pencil.png" />
+    <None Include="images\diamond.png" />
+    <None Include="images\skull.png" />
+    <Content Include="fire2.ico" />
+    <None Include="images\iconLayer.bmp" />
+    <Content Include="images\ability2.png" />
+    <None Include="images\abilitygroup2.png" />
+    <Content Include="images\diamond2.png" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Resources\redo.gif" />
+    <None Include="Resources\undo.gif" />
+    <None Include="Resources\hmove.cur" />
+    <None Include="Resources\pen_r.cur" />
+    <None Include="images\spider2.png" />
+    <None Include="images\item2.png" />
+    <None Include="images\treasure.png" />
+    <None Include="images\shop.png" />
+    <None Include="images\race.png" />
+    <None Include="images\man2.png" />
+    <None Include="images\statuseffect2.png" />
+    <None Include="images\pencil2.png" />
+    <None Include="images\stat2.png" />
+    <None Include="images\help.png" />
+    <None Include="images\help2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferences Include="Web References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Damdai\Damdai.Forms\Damdai.Forms.csproj">
+      <Project>{543908cd-a0a8-476e-9b9d-c31cc31ae84e}</Project>
+      <Name>Damdai.Forms</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Damdai\Damdai.Utils\Damdai.csproj">
+      <Project>{2d235b9a-ce35-4272-9d4d-c384beff935e}</Project>
+      <Name>Damdai</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Third Party\luainterface-1.5.3\source\src\LuaInterface\LuaInterface.csproj">
+      <Project>{f55cabbb-4108-4a39-94e1-581fd46dc021}</Project>
+      <Name>LuaInterface</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>

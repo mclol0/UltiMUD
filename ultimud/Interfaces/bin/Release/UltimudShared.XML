@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>UltimudShared</name>
+    </assembly>
+    <members>
+        <member name="T:Ultimud.AbilityState">
+            <exclude/>
+        </member>
+    </members>
+</doc>

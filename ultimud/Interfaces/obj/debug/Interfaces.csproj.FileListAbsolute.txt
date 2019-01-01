@@ -1,0 +1,14 @@
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\bin\Debug\UltimudShared.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\bin\Debug\UltimudShared.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\bin\Debug\Damdai.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\bin\Debug\Damdai.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Debug\Interfaces.csprojResolveAssemblyReference.cache
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Debug\UltimudShared.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Debug\UltimudShared.pdb
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\bin\Debug\UltimudShared.dll
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\bin\Debug\UltimudShared.pdb
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\bin\Debug\Damdai.dll
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\bin\Debug\Damdai.pdb
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\Interfaces.csprojResolveAssemblyReference.cache
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\UltimudShared.dll
+C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\UltimudShared.pdb

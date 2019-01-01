@@ -1,0 +1,21 @@
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\Damdai.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\Damdai.Forms.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\LuaInterface.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\Damdai.Forms.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\Damdai.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\LuaInterface.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD.csprojResolveAssemblyReference.cache
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.AreaCanvas.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.AreaEditor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.BoundarySelector.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.MainForm.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.ObjectExplorer.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.PlayerMonitor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.Properties.Resources.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\Ultimud.UserMonitor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD.csproj.GenerateResource.Cache
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\UltiMUD Server.exe.config
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD Server.exe
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD Server.XmlSerializers.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\UltiMUD Server.exe
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\UltiMUD Server.XmlSerializers.dll

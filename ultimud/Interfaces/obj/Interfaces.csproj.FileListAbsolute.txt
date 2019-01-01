@@ -1,0 +1,7 @@
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\bin\Debug\UltimudShared.dll
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\bin\Debug\UltimudShared.pdb
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\bin\Debug\Damdai.dll
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\bin\Debug\Damdai.pdb
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\obj\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\obj\Debug\UltimudShared.dll
+C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\UltiMUD\Interfaces\obj\Debug\UltimudShared.pdb

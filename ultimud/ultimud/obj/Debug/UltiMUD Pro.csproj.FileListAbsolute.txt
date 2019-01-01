@@ -1,0 +1,21 @@
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\UltiMUD Pro.exe.config
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\UltiMUD Pro.exe
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\UltiMUD Pro.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\UltiMUD Pro.exe
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\UltiMUD Pro.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\Damdai.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\Damdai.Forms.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\LuaInterface.dll
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\Damdai.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\Damdai.Forms.pdb
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\UltiMUD Pro.csprojResolveAssemblyReference.cache
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.AreaCanvas.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.AreaEditor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.BoundarySelector.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.MainForm.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.ObjectExplorer.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.PlayerMonitor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.Properties.Resources.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\Ultimud.UserMonitor.resources
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\obj\Debug\UltiMUD Pro.csproj.GenerateResource.Cache
+C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Server\bin\Debug\LuaInterface.pdb

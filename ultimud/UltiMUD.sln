@@ -1,0 +1,52 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltiMUD", "UltiMUD\UltiMUD.csproj", "{2A12C62A-DBA3-479D-83E5-7592D5CA349C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E} = {2D235B9A-CE35-4272-9D4D-C384BEFF935E}
+		{543908CD-A0A8-476E-9B9D-C31CC31AE84E} = {543908CD-A0A8-476E-9B9D-C31CC31AE84E}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Damdai.Forms", "..\Damdai\Damdai.Forms\Damdai.Forms.csproj", "{543908CD-A0A8-476E-9B9D-C31CC31AE84E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E} = {2D235B9A-CE35-4272-9D4D-C384BEFF935E}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Damdai", "..\Damdai\Damdai.Utils\Damdai.csproj", "{2D235B9A-CE35-4272-9D4D-C384BEFF935E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaces", "Interfaces\Interfaces.csproj", "{38C6005F-93E7-4243-92B1-90C5CF858207}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaInterface", "..\Third Party\luainterface-1.5.3\source\src\LuaInterface\LuaInterface.csproj", "{F55CABBB-4108-4A39-94E1-581FD46DC021}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A12C62A-DBA3-479D-83E5-7592D5CA349C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A12C62A-DBA3-479D-83E5-7592D5CA349C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A12C62A-DBA3-479D-83E5-7592D5CA349C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A12C62A-DBA3-479D-83E5-7592D5CA349C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{543908CD-A0A8-476E-9B9D-C31CC31AE84E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{543908CD-A0A8-476E-9B9D-C31CC31AE84E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{543908CD-A0A8-476E-9B9D-C31CC31AE84E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{543908CD-A0A8-476E-9B9D-C31CC31AE84E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D235B9A-CE35-4272-9D4D-C384BEFF935E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38C6005F-93E7-4243-92B1-90C5CF858207}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38C6005F-93E7-4243-92B1-90C5CF858207}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38C6005F-93E7-4243-92B1-90C5CF858207}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38C6005F-93E7-4243-92B1-90C5CF858207}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
