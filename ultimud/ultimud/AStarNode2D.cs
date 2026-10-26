@@ -48,8 +48,25 @@ namespace Ultimud
         /// <param name="AY">Y-coordinate</param>
         private void AddSuccessor(List<AStarNode> successors, Point p)
         {
-            //Area.Layer layer = this.location_.Area.GetLayer<Area.Layer>(p, false);
-            //if (((AStarNode2D)this.GoalNode).Location.Point != p && layer != null && layer.LayerFlags.Get((int)Area.Layer.LayerFlag.NoWalk))
+            if (this.Cost >= 100)
+                return;
+            AStarNode2D goalNode = this.GoalNode as AStarNode2D;
+            if (goalNode != null)
+            {
+                int maxSearchDist = 100;
+                if (this.object_ != null)
+                {
+                    int startGoalDist = Math.Max(
+                        Math.Abs(this.object_.Location.Point.X - goalNode.Location.Point.X),
+                        Math.Abs(this.object_.Location.Point.Y - goalNode.Location.Point.Y));
+                    maxSearchDist = Math.Max(50, Math.Min(100, startGoalDist + 25));
+                }
+                if (Math.Abs(p.X - goalNode.Location.Point.X) > maxSearchDist ||
+                    Math.Abs(p.Y - goalNode.Location.Point.Y) > maxSearchDist)
+                {
+                    return;
+                }
+            }
             if (((AStarNode2D)this.GoalNode).Location.Point != p && !this.object_.CanMove(p, false))
                 return;
             AStarNode2D newNode = new AStarNode2D(this, this.GoalNode, this.Cost + 1, new Location(this.location_.Area, p), this.object_);

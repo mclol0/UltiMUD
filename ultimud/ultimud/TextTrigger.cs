@@ -22,7 +22,9 @@ namespace Ultimud
         string trigger_;
         string response_;
         Regex regex_;
+#pragma warning disable 0169, 0414
         int delay_; //Deprecated.
+#pragma warning restore 0169, 0414
         List<Guid> raceRequirements_ = new List<Guid>();
         List<Guid> jobRequirements_ = new List<Guid>();
         List<Guid> abilityRequirements_ = new List<Guid>();

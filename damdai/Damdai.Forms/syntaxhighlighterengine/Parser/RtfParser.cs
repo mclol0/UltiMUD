@@ -41,7 +41,7 @@ namespace Damdai.Forms
 		public RtfParser(RichTextBox targetControl)
 		{
 			this.targetControl = targetControl;
-			this.rtfHeader = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset0 Courier New;}{\\f1\fnil\\fcharset0 Microsoft Sans Serif;}}" +
+			this.rtfHeader = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset0 Courier New;}{\\f1\\fnil\\fcharset0 Microsoft Sans Serif;}}" +
 			"{\\colortbl ;\\red255\\green0\\blue0; \\red0\\green128\\blue0; \\red0\\green0\\blue255; \\red128\\green0\\blue0; \\red199\\green21\\blue133; " + 
 				"\\red155\\green0\\blue0; \\red255\\green255\\blue0; \\red125\\green125\\blue125; \\red255\\green165\\blue0; }" +
 			"\\viewkind4\\uc1\\pard\\f0\\fs20 ";

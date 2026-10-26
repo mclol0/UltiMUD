@@ -3,3 +3,7 @@ C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\Buil
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.csprojResolveAssemblyReference.cache
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.dll
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\Built\LuaInterface.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\Built\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.pdb

@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.ComponentModel;
 using System.Drawing.Design;
+using System.Security.Cryptography;
 using LuaInterface;
 using Damdai;
 
@@ -94,11 +95,40 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         [NonSerialized]
         Lua lua_ = new Lua();
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        object inputLock_ = new object();
         #endregion
 
         #region Properties
         [Browsable(false)]
         public Guid Id
+        {
+            get { return this.id_; }
+            set { this.id_ = value; }
+        }
+
+        [XmlIgnore]
+        [Browsable(false)]
+        internal object InputLock
+        {
+            get
+            {
+                if (this.inputLock_ == null)
+                    this.inputLock_ = new object();
+                return this.inputLock_;
+            }
+        }
+
+        public string CustomPrompt
+        {
+            get { return this.prompt_; }
+            set { this.prompt_ = value; }
+        }
+
+        [Browsable(false)]
+        internal Guid UnusedId
         {
             get { return this.id_; }
             set { this.id_ = value; }
@@ -151,24 +181,67 @@ namespace Ultimud
                     return this.CurrentMenu.Prompt;
                 else
                 {
+                    if (this.Character == null || !this.Flags.Get((int)UserFlags.LoggedIn))
+                        return string.Empty;
+                    if (!string.IsNullOrEmpty(this.prompt_))
+                        return String.ReplaceVars(this.prompt_, this.Character) + "\r\n";
                     try
                     {
                         lock (this.lua_)
                         {
+                            if (Server.Instance == null || Server.Instance.Settings == null || string.IsNullOrEmpty(Server.Instance.Settings.Prompt))
+                                return "> ";
                             this.lua_["user"] = this;
-                            return (string)this.lua_.DoString(Server.Instance.Settings.Prompt)[0];
+                            object[] res = this.lua_.DoString(Server.Instance.Settings.Prompt);
+                            if (res != null && res.Length > 0 && res[0] != null)
+                                return res[0].ToString();
+                            return "> ";
                         }
                     }
                     catch (Exception e)
                     {
                         Trace.WriteLine("Prompt: " + e.Message, "LUA");
-#if DEBUG
-                        return e.Message;
-#else
                         return "> ";
-#endif
                     }
                 }
+            }
+        }
+
+        public static string HashPassword(string password)
+        {
+            if (password == null)
+                password = string.Empty;
+            if (password.StartsWith("$SHA256$"))
+                return password;
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(password);
+                byte[] hash = sha.ComputeHash(bytes);
+                return "$SHA256$" + Convert.ToBase64String(hash);
+            }
+        }
+
+        public void SetPassword(string password)
+        {
+            this.password_ = HashPassword(password);
+        }
+
+        public bool VerifyPassword(string password)
+        {
+            if (string.IsNullOrEmpty(this.password_) || password == null)
+                return false;
+            if (this.password_.StartsWith("$SHA256$"))
+            {
+                return this.password_ == HashPassword(password);
+            }
+            else
+            {
+                if (this.password_ == password)
+                {
+                    this.password_ = HashPassword(password);
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -311,7 +384,8 @@ namespace Ultimud
         internal static void Init(string loadpath, string serverpath)
         {
             settings_.Clear();
-            //settings_.Add("prompt", new Server.InputHandler(User.SetPrompt));
+            settings_.Add("prompt", new Server.InputHandler(User.SetPrompt));
+            settings_.Add("map", new Server.InputHandler(User.SetMap));
             //new Setting("map", new InputHandler(User.SetMap));
             settings_.Add("spacing", new Server.InputHandler(User.SetSpacing));
             settings_.Add("help", new Server.InputHandler(User.SetHelp));
@@ -319,7 +393,7 @@ namespace Ultimud
 
             string oldpath = loadpath + "\\pcs";
             string newpath = serverpath + "\\Players";
-            if (Directory.Exists(oldpath))
+            if (!string.IsNullOrEmpty(loadpath) && !string.IsNullOrEmpty(serverpath) && Directory.Exists(oldpath))
                 Directory.Move(oldpath, newpath);
         }
         
@@ -327,7 +401,7 @@ namespace Ultimud
         internal void Init(User user)
         {
             this.Password = user.Password;
-            //this.Prompt = user.prompt_;
+            this.prompt_ = user.prompt_;
             this.Character = user.Character;
             this.Flags = user.Flags;
             this.Aliases = user.Aliases;
@@ -341,7 +415,7 @@ namespace Ultimud
             {
                 lock (this.character_)
                 {
-                    string path = MainForm.Instance.ServerPath + "\\Players";
+                    string path = Server.Instance.ServerPath + "\\Players";
                     Directory.CreateDirectory(path);
                     Damdai.Serialization.Binary.Serialize(this, path + "\\" + this.Character.Name);
                 }
@@ -351,7 +425,7 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         internal void Load()
         {
-            string filename = MainForm.Instance.ServerPath + "\\Players\\" + this.Character.Name;
+            string filename = Server.Instance.ServerPath + "\\Players\\" + this.Character.Name;
             User temp = Damdai.Serialization.Binary.Deserialize<User>(filename, new Server.SerializationBinder());
             this.Init(temp);
             this.Id = temp.Id;
@@ -365,13 +439,31 @@ namespace Ultimud
             if (this.Character != null)
             {
                 Trace.WriteLine("Deleting player: " + this.character_.Name);
-                string path = MainForm.Instance.ServerPath + "\\Players\\" + this.Character.Name;
+                string path = Server.Instance.ServerPath + "\\Players\\" + this.Character.Name;
                 if (File.Exists(path))
                     File.Delete(path);
             }
         }
         
-        //static internal bool SetPrompt(User user)
+        static internal bool SetPrompt(User user)
+        {
+            if (string.IsNullOrEmpty(user.Command))
+            {
+                user.Menus.Enqueue(new Menu(SetPrompt, "New prompt: "));
+                return false;
+            }
+            else
+            {
+                if (user.Command == "default")
+                    user.CustomPrompt = null;
+                else
+                    user.CustomPrompt = user.Command + " ";
+
+                user.FinishInput();
+                return true;
+            }
+        }
+        //static internal bool SetPromptOld(User user)
         //{
         //    if (string.IsNullOrEmpty(user.Command))
         //    {
@@ -583,7 +675,7 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public void SendPrompt()
         {
-            if (this.Socket != null && this.Prompt != null)
+            if (this.Socket != null && this.Socket.Connected && this.Prompt != null)
             {
                 string str = string.Empty;
 
@@ -594,7 +686,7 @@ namespace Ultimud
 
                 str += Telnet.Colorize(this.Prompt);
                 byte[] data = Encoding.ASCII.GetBytes(str);
-                this.Socket.Send(data);
+                try { this.Socket.Send(data); } catch (SocketException) { } catch (ObjectDisposedException) { }
             }
         }
         
@@ -647,7 +739,7 @@ namespace Ultimud
                         }
 
                         byte[] data = Encoding.ASCII.GetBytes(sb.ToString());
-                        this.Socket.Send(data);
+                        try { this.Socket.Send(data); } catch (SocketException) { } catch (ObjectDisposedException) { }
                         this.output_.Remove(threadid);
                     }
                 }
@@ -679,7 +771,7 @@ namespace Ultimud
                         }
 
                         byte[] data = Encoding.ASCII.GetBytes(sb.ToString());
-                        this.Socket.Send(data);
+                        try { this.Socket.Send(data); } catch (SocketException) { } catch (ObjectDisposedException) { }
                     }
 
                     this.output_.Clear();
@@ -747,7 +839,7 @@ namespace Ultimud
             this.currentCommandArgs_ = new List<object>();
             this.menus_ = new Queue<Menu>();
             this.output_ = new Dictionary<int, List<string>>();
-            this.prompt_ = null;
+            this.inputLock_ = new object();
             this.lua_ = new Lua();
             if (this.channelsettings_ == null)
                 this.channelsettings_ = new Dictionary<Guid, bool>();
@@ -789,12 +881,20 @@ namespace Ultimud
         {
             if (string.IsNullOrEmpty(user.Command))
             {
+                Telnet.SetEcho(user, false);
                 user.Menus.Enqueue(new Menu(EnterPassword, "Enter password: "));
                 return false;
             }
             else
             {
-                user.CurrentCommandArgs.Add(user.GetArgument());
+                Telnet.SetEcho(user, true);
+                string pass = user.GetArgument();
+                if (pass.Length < 4)
+                {
+                    user.SendError("Password must be at least 4 characters long.");
+                    return EnterPassword(user);
+                }
+                user.CurrentCommandArgs.Add(pass);
                 return true;
             }
         }
@@ -802,12 +902,35 @@ namespace Ultimud
         {
             if (string.IsNullOrEmpty(user.Command))
             {
+                Telnet.SetEcho(user, false);
                 user.Menus.Enqueue(new Menu(ConfirmPassword, "Confirm password: "));
                 return false;
             }
             else
             {
+                Telnet.SetEcho(user, true);
                 user.CurrentCommandArgs.Add(user.GetArgument());
+                return true;
+            }
+        }
+        internal static bool ConfirmPasswordLegacyUnused(User user)
+        {
+            if (string.IsNullOrEmpty(user.Command))
+            {
+                Telnet.SetEcho(user, false);
+                user.Menus.Enqueue(new Menu(ConfirmPassword, "Confirm password: "));
+                return false;
+            }
+            else
+            {
+                Telnet.SetEcho(user, true);
+                string pass = user.GetArgument();
+                if (pass.Length < 4)
+                {
+                    user.SendError("Password must be at least 4 characters long.");
+                    return EnterPassword(user);
+                }
+                user.CurrentCommandArgs.Add(pass);
                 return true;
             }
         }
@@ -1022,7 +1145,7 @@ namespace Ultimud
                     dirs.AddRange(Enum.GetNames(typeof(Area.Direction)));
                     dir = dirs.Find(delegate(string str) { return str.StartsWith(arg, StringComparison.CurrentCultureIgnoreCase); });
                     if (dir != null) user.CurrentCommandArgs.Add(Enum.Parse(typeof(Area.Direction), dir));
-                    else user.CurrentCommandArgs.Add(user.Character.FindNearby<Object>(arg, (int)user.Character.GetStat("sight").Current, true));
+                    else user.CurrentCommandArgs.Add(user.Character.FindNearby<Object>(arg, System.Math.Max(5, (int)user.Character.GetStatCurrent("sight")), true));
                 }
             }
             else
@@ -1033,7 +1156,7 @@ namespace Ultimud
                     Area.Direction dir = (Area.Direction)x;
                     menu.AddOption(new Menu.Option(dir.ToString(), dir));
                 }
-                List<Object> targets = user.Character.NearbyObjects<Object>((int)user.Character.GetStat("sight").Current, true);
+                List<Object> targets = user.Character.NearbyObjects<Object>(System.Math.Max(5, (int)user.Character.GetStatCurrent("sight")), true);
 
                 foreach (Object o in targets)
                     if (o.Distance(user.Character) > 0)
@@ -1054,7 +1177,8 @@ namespace Ultimud
                 user.CurrentCommandArgs.Add(user.Character.FindNearby<Object>(arg, (int)user.Character.GetStatCurrent("sight"), true));
             else
             {
-                Menu menu = new Menu(SelectDestination, null);
+                Menu menu = new Menu(SelectDirection, null);
+                menu = new Menu(SelectDestination, null);
                 List<Object> targets = user.Character.NearbyObjects<Object>((int)user.Character.GetStatCurrent("sight"), true);
 
                 foreach (Object o in targets)
@@ -1089,7 +1213,7 @@ namespace Ultimud
             }
             else
             {
-                Menu menu = new Menu(SelectDestination, null);
+                Menu menu = new Menu(SelectDirection, null);
                 for (int x = 0; x < Enum.GetValues(typeof(Area.Direction)).Length; ++x)
                 {
                     Area.Direction dir = (Area.Direction)x;
@@ -1103,6 +1227,45 @@ namespace Ultimud
             return true;
         }
         internal static bool SelectSpeed(User user)
+        {
+            if (Server.Instance != null && Server.Instance.Settings != null && Server.Instance.Settings.SimpleMovement)
+            {
+                user.CurrentCommandArgs.Add(1);
+                return true;
+            }
+            string arg = null;
+            if (user.CurrentArg != null)
+                user.CurrentCommandArgs.Add(user.GetCurrentArg());
+            else if (!string.IsNullOrEmpty((arg = user.GetArgument())))
+            {
+                int speed;
+                if (arg.Equals("walk", StringComparison.OrdinalIgnoreCase))
+                    user.CurrentCommandArgs.Add(1);
+                else if (int.TryParse(arg, out speed))
+                    user.CurrentCommandArgs.Add(speed);
+                else
+                {
+                    user.Send("Invalid speed.");
+                    throw new AbortCommandException();
+                }
+            }
+            else
+            {
+                int maxSpeed = 5;
+                Stat speed = (Server.Instance != null && Server.Instance.Settings != null && Server.Instance.Settings.SpeedStat != Guid.Empty)
+                    ? user.Character.GetStat(Server.Instance.Settings.SpeedStat)
+                    : null;
+                if (speed == null)
+                    speed = user.Character.GetStat("speed");
+                if (speed != null)
+                    maxSpeed = (int)speed.Current;
+                Menu menu = new Menu(SelectSpeed, "How fast do you want to travel [1-" + maxSpeed + "]? ");
+                user.Menus.Enqueue(menu);
+                return false;
+            }
+            return true;
+        }
+        internal static bool SelectSpeedLegacyUnused(User user)
         {
             string arg = null;
             if (user.CurrentArg != null)
@@ -1443,7 +1606,7 @@ namespace Ultimud
                     if (item != null)
                     {
                         string text = item.Name;
-                        menu.AddOption(new Menu.Option(item.Name, new string[] { item.Name, "--", "{color:green}$" + shop.SellPrice(item).ToString(Server.Instance.Settings.NumberFormat + "{color:reset}") }, null));
+                        menu.AddOption(new Menu.Option(item.Name, new string[] { item.Name, "--", "{color:green}$" + shop.SellPrice(item).ToString(Server.Instance.Settings.NumberFormat) + "{color:reset}" }, null));
                     }
                 }
 

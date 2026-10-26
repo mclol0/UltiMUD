@@ -16,6 +16,7 @@ namespace Damdai.Pathfinding
         Heap<T> closedList_ = new Heap<T>();
         List<AStarNode> successors_ = new List<AStarNode>();
         List<T> solution_ = new List<T>();
+        int maxIterations_ = 2500;
 
         #region Properties
 
@@ -25,6 +26,12 @@ namespace Damdai.Pathfinding
         public List<T> Solution
         {
             get { return this.solution_; }
+        }
+
+        public int MaxIterations
+        {
+            get { return this.maxIterations_; }
+            set { this.maxIterations_ = value; }
         }
 
         #endregion
@@ -60,7 +67,8 @@ namespace Damdai.Pathfinding
             this.goalNode_ = goalNode;
 
             this.openList_.Add(this.startNode_);
-            while (this.openList_.Count > 0)
+            int iterations = 0;
+            while (this.openList_.Count > 0 && ++iterations <= this.maxIterations_)
             {
                 // Get the node with the lowest TotalCost
                 T currentNode = this.openList_.Pop();
@@ -97,10 +105,12 @@ namespace Damdai.Pathfinding
                         continue;
 
                     // Remove the old successor from the open list
-                    this.openList_.Remove(openNode);
+                    if (openNode != null)
+                        this.openList_.Remove(openNode);
 
                     // Remove the old successor from the closed list
-                    this.closedList_.Remove(closedNode);
+                    if (closedNode != null)
+                        this.closedList_.Remove(closedNode);
 
                     // Add the current successor to the open list
                     this.openList_.Push(successorNode);

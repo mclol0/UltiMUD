@@ -369,7 +369,10 @@ namespace Damdai.Forms
                         x += img.Width + 2;
                     }
                 }
-                e.Graphics.DrawString(e.SubItem.Text, e.SubItem.Font, new SolidBrush(e.SubItem.ForeColor), x, fonty);
+                using (SolidBrush brush = new SolidBrush(e.SubItem.ForeColor))
+                {
+                    e.Graphics.DrawString(e.SubItem.Text, e.SubItem.Font, brush, x, fonty);
+                }
                 return;
             }
             EXListViewSubItemAB subitem = e.SubItem as EXListViewSubItemAB;
@@ -380,7 +383,10 @@ namespace Damdai.Forms
             else
             {
                 x = subitem.DoDraw(e, x, this.Columns[e.ColumnIndex] as EXColumnHeader);
-                e.Graphics.DrawString(e.SubItem.Text, e.SubItem.Font, new SolidBrush(e.SubItem.ForeColor), x, fonty);
+                using (SolidBrush brush = new SolidBrush(e.SubItem.ForeColor))
+                {
+                    e.Graphics.DrawString(e.SubItem.Text, e.SubItem.Font, brush, x, fonty);
+                }
             }
         }
 

@@ -17,7 +17,7 @@ namespace Ultimud
 
         internal CharacterAbilitySelector()
         {
-            //this.control_.Maximum = 100;
+            this.control_.Maximum = int.MaxValue;
             this.control_.Minimum = 0;
 
             this.view_.BorderStyle = BorderStyle.None;
@@ -74,7 +74,11 @@ namespace Ultimud
         {
             if (e.SubItem == 1)
             {
-                this.control_.Value = int.Parse(e.Item.SubItems[e.SubItem].Text);
+                int val = 0;
+                int.TryParse(e.Item.SubItems[e.SubItem].Text, out val);
+                if (val < this.control_.Minimum) val = (int)this.control_.Minimum;
+                if (val > this.control_.Maximum) val = (int)this.control_.Maximum;
+                this.control_.Value = val;
                 this.view_.StartEditing(this.control_, e.Item, e.SubItem);
                 this.control_.Select(0, 10);
             }

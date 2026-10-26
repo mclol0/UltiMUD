@@ -87,6 +87,8 @@ namespace Ultimud
             this.newRaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.jobsMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.newJobToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.scriptsMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.newScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
@@ -118,6 +120,7 @@ namespace Ultimud
             this.npcsMenuStrip.SuspendLayout();
             this.racesMenuStrip.SuspendLayout();
             this.jobsMenuStrip.SuspendLayout();
+            this.scriptsMenuStrip.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.playerMenuStrip.SuspendLayout();
             this.commandMenuStrip.SuspendLayout();
@@ -310,6 +313,20 @@ namespace Ultimud
             this.newJobToolStripMenuItem.Text = "&New Job";
             this.newJobToolStripMenuItem.Click += new System.EventHandler(this.newJobToolStripMenuItem_Click);
             // 
+            // scriptsMenuStrip
+            // 
+            this.scriptsMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newScriptToolStripMenuItem});
+            this.scriptsMenuStrip.Name = "scriptsMenuStrip";
+            this.scriptsMenuStrip.Size = new System.Drawing.Size(136, 26);
+            // 
+            // newScriptToolStripMenuItem
+            // 
+            this.newScriptToolStripMenuItem.Name = "newScriptToolStripMenuItem";
+            this.newScriptToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.newScriptToolStripMenuItem.Text = "&New Script";
+            this.newScriptToolStripMenuItem.Click += new System.EventHandler(this.newScriptToolStripMenuItem_Click);
+            // 
             // treeView1
             // 
             this.treeView1.BackColor = System.Drawing.SystemColors.Window;
@@ -381,6 +398,7 @@ namespace Ultimud
             treeNode12.Name = "jobs";
             treeNode12.SelectedImageIndex = 21;
             treeNode12.Text = "Jobs";
+            treeNode13.ContextMenuStrip = this.scriptsMenuStrip;
             treeNode13.ImageIndex = 26;
             treeNode13.Name = "scripts";
             treeNode13.SelectedImageIndex = 26;
@@ -592,6 +610,7 @@ namespace Ultimud
             this.npcsMenuStrip.ResumeLayout(false);
             this.racesMenuStrip.ResumeLayout(false);
             this.jobsMenuStrip.ResumeLayout(false);
+            this.scriptsMenuStrip.ResumeLayout(false);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.playerMenuStrip.ResumeLayout(false);
@@ -651,5 +670,7 @@ namespace Ultimud
         private System.Windows.Forms.ToolStripMenuItem newRaceToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip jobsMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem newJobToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip scriptsMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem newScriptToolStripMenuItem;
     }
 }

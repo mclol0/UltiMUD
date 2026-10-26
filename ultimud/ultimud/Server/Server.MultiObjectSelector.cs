@@ -38,9 +38,15 @@ namespace Ultimud
                 });
                 this.toolstrip_.Items.Add("Delete", null, delegate(object sender, EventArgs args)
                 {
-                    IIdentifiable o = this.listbox_.SelectedItem as IIdentifiable;
-                    Server.Instance.DataSets[typeof(T)].Remove(o.Id);
-                    this.listbox_.Items.Remove(o);
+                    if (this.listbox_.SelectedItem != null)
+                    {
+                        IIdentifiable o = this.listbox_.SelectedItem as IIdentifiable;
+                        if (o != null)
+                        {
+                            Server.Instance.DataSets[typeof(T)].Remove(o.Id);
+                            this.listbox_.Items.Remove(o);
+                        }
+                    }
                 });
                 this.listbox_.Dock = DockStyle.Fill;
                 this.listbox_.BorderStyle = BorderStyle.None;
@@ -73,7 +79,8 @@ namespace Ultimud
                     this.listbox_.Items.Add(t, list.Contains(t.Id));
 
                 IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                service.DropDownControl(this.panel_);
+                if (service != null)
+                    service.DropDownControl(this.panel_);
                 list.Clear();
                 for (int x = 0; x < this.listbox_.CheckedItems.Count; ++x)
                     list.Add(((T)this.listbox_.CheckedItems[x]).Id);

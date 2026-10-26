@@ -61,7 +61,10 @@ namespace Damdai.Forms
                 }
             }
             int fonty = bounds.Y + ((int)(bounds.Height / 2)) - ((int)(e.Font.Height / 2));
-            e.Graphics.DrawString(item.Text, e.Font, new SolidBrush(e.ForeColor), x, fonty);
+            using (SolidBrush brush = new SolidBrush(e.ForeColor))
+            {
+                e.Graphics.DrawString(item.Text, e.Font, brush, x, fonty);
+            }
             e.DrawFocusRectangle();
         }
 

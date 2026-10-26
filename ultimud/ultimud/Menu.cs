@@ -135,7 +135,7 @@ namespace Ultimud
                 this.format_ = Formats.List;
             }
         }
-        public Menu(string description, StringTable stringtable)
+        public Menu(string description, StringTable stringtable) : this(stringtable)
         {
             this.description_ = description;
         }

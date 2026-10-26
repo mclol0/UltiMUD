@@ -6,3 +6,11 @@ C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Release\Inte
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Release\UltimudShared.dll
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\obj\Release\UltimudShared.pdb
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\Interfaces\bin\Release\Damdai.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\UltimudShared.XML
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\UltimudShared.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\UltimudShared.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\Damdai.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\Damdai.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\UltimudShared.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\UltimudShared.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\Interfaces.csprojResolveAssemblyReference.cache

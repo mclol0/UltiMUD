@@ -58,6 +58,13 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public override void Start()
         {
+            if (this.astar_ != null && this.astar_.Solution.Count == 0)
+            {
+                this.object_.Send("You cannot find a path to your destination.");
+                this.Stop(true);
+                return;
+            }
+
             this.object_.Position = Object.Positions.Moving;
 
             if (this.destination_ is Area.Direction)
@@ -147,7 +154,17 @@ namespace Ultimud
                 ((DateTime.Now - this.lastUpdate_).TotalMilliseconds / 500) >= (6 - this.Speed))
             {
                 if (this.astar_ != null && !this.astarEnumerator_.MoveNext())
-                    this.Finish();
+                {
+                    if (this.astar_.Solution.Count == 0)
+                    {
+                        this.object_.Send("You cannot find a path to your destination.");
+                        this.Stop(true);
+                    }
+                    else
+                    {
+                        this.Finish();
+                    }
+                }
                 else if (this.destination_ == null)
                 {
                     if (!this.object_.Move(
@@ -155,7 +172,7 @@ namespace Ultimud
                         new String(null, null, null, null, "{1} leaves {dir}.", null),
                         new String(null, null, null, null, "{1} wanders by aimlessly.", null), false))
                     {
-                        this.object_.Send("Unable to move " + ((Area.Direction)destination_).ToString().ToLower() + ".");
+                        this.object_.Send("Unable to move.");
                         this.Stop(false);
                     }
                 }
@@ -175,7 +192,8 @@ namespace Ultimud
                     {
                         if (this.astar_ != null && !object_.Move(object_.GetDirection(((AStarNode2D)this.astarEnumerator_.Current).Location.Point), leavemsg, arrivemsg, false))
                         {
-                            this.object_.Send("Unable to move " + this.object_.GetDirection(this.destination_ as Object).ToString().ToLower() + ".");
+                            Area.Direction failedDir = object_.GetDirection(((AStarNode2D)this.astarEnumerator_.Current).Location.Point);
+                            this.object_.Send("Unable to move " + failedDir.ToString().ToLower() + ".");
                             this.Stop(false);
                         }
                     }

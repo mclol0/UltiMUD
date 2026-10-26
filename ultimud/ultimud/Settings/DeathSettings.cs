@@ -140,7 +140,7 @@ namespace Ultimud
         public void Apply(Object victim, Object killer)
         {
             object[] rvals = this.DoScript(victim, killer);
-            if (rvals != null && rvals[0].ToString() == "cancel")
+            if (rvals != null && rvals.Length > 0 && rvals[0] != null && rvals[0].ToString() == "cancel")
                 return;
 
             this.BroadcastMessage(victim, killer);
@@ -152,7 +152,31 @@ namespace Ultimud
                 for (int x = 0; x < amount; ++x)
                 {
                     List<Item> items = victim.GetChildren<Item>();
-                    items[Server.RandomNumber.Next(items.Count)].Parent = (killer is Character ? killer : victim.Area);
+                    if (items.Count > 0)
+                        items[Server.RandomNumber.Next(items.Count)].Parent = (killer is Character ? killer : victim.Area);
+                }
+
+                if (this.LostMoneyPercentage > 0 && victim.Value > 0)
+                {
+                    int lostMoney = victim.Value * this.LostMoneyPercentage / 100;
+                    if (lostMoney > 0)
+                    {
+                        victim.Value -= lostMoney;
+                        if (killer is Character)
+                        {
+                            killer.Value += lostMoney;
+                        }
+                        else if (victim.Location != null && victim.Location.Area != null)
+                        {
+                            Item money = new Item();
+                            money.Name = "a pile of money";
+                            money.Value = lostMoney;
+                            money.ObjectFlags.Set((int)Object.ObjFlags.Money, true);
+                            money.MapColor = Telnet.Color.BrightYellow;
+                            money.MapSymbol = "$";
+                            money.Location = victim.Location;
+                        }
+                    }
                 }
 
                 Location loc = this.TransferLocation;

@@ -92,16 +92,22 @@ namespace Ultimud
         List<Guid> requirements_ = new List<Guid>();
         List<StatModifier> improvements_ = new List<StatModifier>();
         List<Guid> defense_ = new List<Guid>();
+#pragma warning disable 0169, 0414
         bool usesWeapon_; //Deprecated.
         int improvementRate_ = 5; //Deprecated.
+#pragma warning restore 0169, 0414
         Targets target_ = Targets.Self;
+#pragma warning disable 0169, 0414
         List<StatFactor> successFactors_; //Deprecated.
         List<StatFactor> missFactors_; //Deprecated.
+#pragma warning restore 0169, 0414
         Character.BodyParts bodyPart_ = Character.BodyParts.None;
         List<StatusEffect> addTargetStatusEffects_ = new List<StatusEffect>();
         List<StatusEffect> removeTargetStatusEffects_ = new List<StatusEffect>();
+#pragma warning disable 0169, 0414
         bool aggressive_; //Deprecated.
         bool defensive_; //Deprecated.
+#pragma warning restore 0169, 0414
         List<Guid> raceRestrictions_ = new List<Guid>();
         List<Guid> jobRestrictions_ = new List<Guid>();
         bool canInterrupt_ = true;
@@ -114,15 +120,19 @@ namespace Ultimud
         Styles style_ = Styles.None;
         bool auto_;
         bool limitRangeBySight_ = true;
+#pragma warning disable 0169, 0414
         Dictionary<ScriptType, string> scripts_; //Deprecated.
         bool canfail_; //Deprecated.
+#pragma warning restore 0169, 0414
         bool disablemenu_;
         BitArray targettypes_ = new BitArray(32);
         uint minrange_;
+#pragma warning disable 0169, 0414
         List<string> itemtypes_; //Deprecated.
         string failformula_; //Deprecated.
         string missformula_; //Deprecated.
         string levelupformula_; //Deprecated.
+#pragma warning restore 0169, 0414
         Dictionary<ScriptType, Guid> scripts2_ = new Dictionary<ScriptType, Guid>();
         List<Guid> itemtags_ = new List<Guid>();
 
@@ -1400,7 +1410,8 @@ namespace Ultimud
             this.itemtypes_ = null;
             this.canfail_ = false;
             this.lua_ = new Lua();
-            this.itemtags_ = new List<Guid>();
+            if (this.itemtags_ == null)
+                this.itemtags_ = new List<Guid>();
 
             if (!string.IsNullOrEmpty(this.levelupformula_))
             {

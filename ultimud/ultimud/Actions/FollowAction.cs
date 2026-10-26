@@ -161,7 +161,10 @@ namespace Ultimud
                     Area.Path path = this.following_ as Area.Path;
                     Point nextPoint;
                     if (!path.GetNextPoint(this.object_.Location.Point, this.lastPoints_, out nextPoint))
+                    {
                         this.Finish();
+                        return;
+                    }
                     else if (!this.object_.Move(this.object_.GetDirection(nextPoint), new String(null, null, null, null, "{1} leaves {dir}.", null), new String(null, null, null, null, "{1} arrives from the {dir}.", null), false))
                     {
                         this.Stop(false);
@@ -169,8 +172,9 @@ namespace Ultimud
                     }
 
                     this.lastPoints_.Enqueue(nextPoint);
-                    //if (this.lastPoints_.Count > 5)
-                    //    this.lastPoints_.Dequeue();
+                    int maxTrack = System.Math.Min(5, System.Math.Max(1, path.Points.Count - 1));
+                    while (this.lastPoints_.Count > maxTrack)
+                        this.lastPoints_.Dequeue();
                 }
                 else if (this.following_ is Object)
                 {

@@ -238,6 +238,54 @@ namespace Ultimud
             if (this.User != null)
                 this.User.Send(str);
         }
+        public string GenerateLookDescription()
+        {
+            return this.GenerateLookDescription(false);
+        }
+        public string GenerateLookDescription(bool brief)
+        {
+            Area area = this.Area;
+            if (area == null)
+                return "You are nowhere.";
+
+            Area.Layer layer = this.OnLayer;
+            string location = (layer != null && !string.IsNullOrEmpty(layer.Name) ? layer.Name + " (" + area.Name + ")" : area.Name);
+            string weather = (layer != null && !Damdai.Collections.Util.IsEmpty(layer.WeatherConditions.PossibleConditions) ? layer.WeatherConditions.ToString() : area.WeatherConditions.ToString());
+            string description = (!brief ? (layer != null && !string.IsNullOrEmpty(layer.Description) ? layer.Description : (!string.IsNullOrEmpty(area.Description) ? area.Description : string.Empty)) : string.Empty);
+            string here = this.GenerateLookDescription("Here you see ", 0, 0);
+            string nearby = this.GenerateLookDescription("Nearby you see ", 1, 5);
+            string distance = this.GenerateLookDescription("In the distance you see ", 6, 15);
+            string objects = (here + nearby + distance).Trim();
+
+            Area.Map mapObj = new Area.Map(this);
+            string map = mapObj.ToString();
+
+            if (Server.Instance.Settings.LookFormat != null && !string.IsNullOrEmpty(Server.Instance.Settings.LookFormat.GeneralFormat))
+            {
+                string fmt = Telnet.Colorize(Server.Instance.Settings.LookFormat.GeneralFormat);
+                fmt = fmt.Replace("{location}", location ?? string.Empty);
+                fmt = fmt.Replace("{area}", area.Name ?? string.Empty);
+                fmt = fmt.Replace("{layer}", (layer != null && !string.IsNullOrEmpty(layer.Name) ? layer.Name : string.Empty));
+                fmt = fmt.Replace("{weather}", weather ?? string.Empty);
+                fmt = fmt.Replace("{description}", description ?? string.Empty);
+                fmt = fmt.Replace("{map}", map ?? string.Empty);
+                fmt = fmt.Replace("{objects}", objects ?? string.Empty);
+                fmt = fmt.Replace("{here}", here.Trim());
+                fmt = fmt.Replace("{nearby}", nearby.Trim());
+                fmt = fmt.Replace("{distance}", distance.Trim());
+                return fmt;
+            }
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine("{color:brightcyan}" + location + "{color:reset} [" + weather + "]");
+            if (!string.IsNullOrEmpty(map))
+                sb.AppendLine(map);
+            if (!string.IsNullOrEmpty(description))
+                sb.AppendLine(description);
+            if (!string.IsNullOrEmpty(objects))
+                sb.AppendLine(objects);
+            return sb.ToString().TrimEnd('\r', '\n');
+        }
         public string GenerateLookDescription(string startingPhrase, int minDistance, int maxDistance)
         {
             Dictionary<string, List<Object>> objects = Utils.ConsolidateList<Object>(this.NearbyObjects<Object>(this.Location.Point, minDistance, maxDistance, true, null, this));
@@ -365,9 +413,13 @@ namespace Ultimud
         }
         public void DropMoney(int amount, bool silent)
         {
+            amount = System.Math.Min(amount, this.Value);
+            if (amount <= 0)
+                return;
+            this.Value -= amount;
             Item money = new Item();
             money.Name = "a pile of money";
-            money.Value = this.Value;
+            money.Value = amount;
             money.ObjectFlags.Set((int)ObjFlags.Money, true);
             money.MapColor = Telnet.Color.BrightYellow;
             money.MapSymbol = "$";
@@ -463,10 +515,34 @@ namespace Ultimud
         }
         public Item GetEquippedItem(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                return null;
+            try
+            {
+                BodyParts part = (BodyParts)Enum.Parse(typeof(BodyParts), name, true);
+                Item equipped;
+                if (this.Equipment.TryGetValue(part, out equipped))
+                    return equipped;
+            }
+            catch
+            {
+            }
             foreach (Item item in this.Equipment.Values)
                 if (String.FindArgument(item.Name, name))
                     return item;
             return null;
+        }
+        public bool HasItem(string itemName, bool searchEquip)
+        {
+            if (this.FindItemInInventory(itemName) != null)
+                return true;
+            if (searchEquip && this.GetEquippedItem(itemName) != null)
+                return true;
+            return false;
+        }
+        public bool HasItem(string itemName)
+        {
+            return this.HasItem(itemName, true);
         }
         public void Open(ICloseable o)
         {
@@ -692,16 +768,17 @@ namespace Ultimud
         }
         public void Improve(Ability ability)
         {
-            ++this.abilities_[ability.Id];
+            if (ability != null && this.abilities_.ContainsKey(ability.Id))
+                ++this.abilities_[ability.Id];
         }
         public int GetLevel(Ability ability)
         {
-            return this.abilities_[ability.Id];
+            return (ability != null && this.abilities_.ContainsKey(ability.Id) ? this.abilities_[ability.Id] : 0);
         }
         public bool HasAbility(string name)
         {
             Ability a = Server.Instance.Get<Ability>(name);
-            return this.abilities_.ContainsKey(a.Id);
+            return (a != null && this.abilities_.ContainsKey(a.Id));
         }
         public int GetAbilityLevel(string abilityname)
         {

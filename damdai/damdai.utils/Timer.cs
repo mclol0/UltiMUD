@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace Damdai
 {
@@ -29,6 +30,7 @@ namespace Damdai
 
         public Timer()
         {
+            this.lastUpdate_ = DateTime.Now;
         }
         public Timer(TimeSpan timespan)
         {
@@ -41,6 +43,12 @@ namespace Damdai
         }
         public Timer(Timer other) : this(other.initialTimespan_) { }
 
+        [OnDeserialized]
+        internal void OnDeserialized(StreamingContext context)
+        {
+            this.lastUpdate_ = DateTime.Now;
+        }
+
         public bool Update()
         {
             lock (this)
@@ -48,6 +56,8 @@ namespace Damdai
                 if (this.timespan_.Ticks > 0)
                 {
                     DateTime now = DateTime.Now;
+                    if (this.lastUpdate_ == DateTime.MinValue)
+                        this.lastUpdate_ = now;
                     this.timespan_ -= (now - this.lastUpdate_);
                     this.lastUpdate_ = now;
                     if (this.timespan_.Ticks > 0)

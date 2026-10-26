@@ -71,6 +71,7 @@ namespace Ultimud
                 this.propertyGrid1.SelectedObject = o;
                 this.propertyGrid1.Tag = null;
                 this.toolStripLabel3.Text = (o != null ? o.ToString() : null);
+                this.objectTree1_ObjectSelectedEvent(o);
             };
             this.objectTree1.GoTo += delegate(Object o)
             {
@@ -146,13 +147,43 @@ namespace Ultimud
         void Open(string filename)
         {
             if (string.IsNullOrEmpty(filename))
-                return;
+            {
+                if (this.server_ == null)
+                {
+                    string defaultMud = Path.Combine(Application.StartupPath, "data\\muds\\Unnamed\\Unnamed.mud");
+                    if (File.Exists(defaultMud))
+                        filename = defaultMud;
+                    else
+                        return;
+                }
+                else
+                    return;
+            }
+
+            if (!File.Exists(filename))
+            {
+                string relPath = Path.Combine(Application.StartupPath, filename);
+                if (File.Exists(relPath))
+                {
+                    filename = relPath;
+                }
+                else if (this.server_ == null)
+                {
+                    string fallback = Path.Combine(Application.StartupPath, "data\\muds\\Unnamed\\Unnamed.mud");
+                    if (File.Exists(fallback))
+                        filename = fallback;
+                    else
+                        return;
+                }
+            }
 
             if (File.Exists(filename))
             {
                 try
                 {
-                    this.Init(Server.Load(filename, Application.StartupPath + "\\data\\muds" + filename.Substring(filename.LastIndexOf('\\')).Replace(".mud", null)));
+                    string fullPath = Path.GetFullPath(filename);
+                    string serverPath = Path.GetDirectoryName(fullPath);
+                    this.Init(Server.Load(fullPath, serverPath));
                 }
                 catch (Exception e)
                 {
@@ -210,10 +241,22 @@ namespace Ultimud
                     ((ISaveable)this.propertyGrid1.SelectedObject).Save();
             }
 
-            StoredSettings.Instance.Port = Convert.ToInt32(this.toolStripTextBox2.Text);
+            int port;
+            if (int.TryParse(this.toolStripTextBox2.Text, out port))
+                StoredSettings.Instance.Port = port;
             StoredSettings.Instance.GameFile = (this.server_ != null ? this.ServerPath + "\\" + String.ReplaceChars(this.server_.Settings.Name, "/\\:*?\"<>|", '_') + ".mud" : null);
             StoredSettings.Save();
-            Environment.Exit(1);
+            if (this.timer_ != null)
+            {
+                this.timer_.Stop();
+                this.timer_.Dispose();
+            }
+            if (this.notifyIcon1 != null)
+            {
+                this.notifyIcon1.Visible = false;
+                this.notifyIcon1.Dispose();
+            }
+            base.OnClosing(e);
         }
         bool ServerSettings_NameChangedEvent(string oldName, string newName)
         {
@@ -298,8 +341,11 @@ WARNING: All player data for that MUD will be lost.",
             if (this.selectedObject_ != null)
             {
                 Area area = this.selectedObject_.Area;
-                this.areaCanvas1.SetArea(area);
-                this.areaCanvas1.GoTo(this.selectedObject_.Location);
+                if (area != null)
+                {
+                    this.areaCanvas1.SetArea(area);
+                    this.areaCanvas1.GoTo(this.selectedObject_.Location);
+                }
             }
         }
         void Character_MovedEvent(Object o, Area.Direction dir)
@@ -368,6 +414,14 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
 
                 this.toolStripTextBox2.Text = str;
                 this.toolStripTextBox2.AppendText(string.Empty);
+            }
+        }
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            if (this.server_ != null && this.server_.IsRunning)
+            {
+                this.server_.Pause();
+                this.toolStripButton2.Checked = this.server_.IsPaused;
             }
         }
         private void toolStripButton3_Click(object sender, EventArgs e)
@@ -486,6 +540,7 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             {
                 this.toolStripButton1.Enabled = false;
                 this.toolStripButton2.Enabled = true;
+                this.toolStripButton2.Checked = false;
                 this.toolStripButton3.Enabled = true;
                 this.toolStripTextBox1.Enabled = false;
                 this.toolStripTextBox2.Enabled = false;
@@ -499,7 +554,7 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
             else
             {
-                //this.objectTree1.Add(user);
+                this.objectTree1.Add(user);
                 this.toolStripStatusLabel2.Text = this.server_.Users.Count + " user(s) online";
                 this.areaCanvas1.Invalidate();
             }
@@ -512,7 +567,9 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
             else
             {
-                //this.objectTree1.Update(user);
+                if (user.Character != null)
+                    user.Character.MovedEvent -= this.Character_MovedEvent;
+                this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
             }
         }
@@ -524,7 +581,7 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
             else
             {
-                //this.objectTree1.Update(user);
+                this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
             }
         }
@@ -536,7 +593,9 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
             else
             {
-                //this.objectTree1.Remove(user);
+                if (user.Character != null)
+                    user.Character.MovedEvent -= this.Character_MovedEvent;
+                this.objectTree1.Remove(user);
                 this.toolStripStatusLabel2.Text = this.server_.Users.Count + " user(s) online";
                 this.areaCanvas1.Invalidate();
             }
@@ -551,6 +610,7 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             {
                 this.toolStripButton1.Enabled = true;
                 this.toolStripButton2.Enabled = false;
+                this.toolStripButton2.Checked = false;
                 this.toolStripButton3.Enabled = false;
                 this.toolStripTextBox1.Enabled = true;
                 this.toolStripTextBox2.Enabled = true;
@@ -564,9 +624,13 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
             else
             {
-                //this.objectTree1.Update(user);
+                this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
-                user.Character.MovedEvent += new Object.MovedHandler(Character_MovedEvent);
+                if (user.Character != null)
+                {
+                    user.Character.MovedEvent -= this.Character_MovedEvent;
+                    user.Character.MovedEvent += new Object.MovedHandler(Character_MovedEvent);
+                }
             }
         }
         #endregion
@@ -677,15 +741,18 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
 
         public override void Write(string message)
         {
-            throw new Exception("The method or operation is not implemented.");
+            if (this.LogEvent != null)
+                this.LogEvent(message, null);
         }
         public override void WriteLine(string message)
         {
-            this.LogEvent(message, null);
+            if (this.LogEvent != null)
+                this.LogEvent(message, null);
         }
         public override void WriteLine(string message, string category)
         {
-            this.LogEvent(message, category);
+            if (this.LogEvent != null)
+                this.LogEvent(message, category);
         }
     }
 }

@@ -50,6 +50,7 @@ namespace Ultimud
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.areaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.layerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.regionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.npcRegionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pathToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -292,6 +293,7 @@ namespace Ultimud
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.areaToolStripMenuItem,
             this.toolStripSeparator3,
+            this.layerToolStripMenuItem,
             this.regionToolStripMenuItem,
             this.npcRegionToolStripMenuItem,
             this.pathToolStripMenuItem,
@@ -317,6 +319,15 @@ namespace Ultimud
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
             this.toolStripSeparator3.Size = new System.Drawing.Size(136, 6);
+            // 
+            // layerToolStripMenuItem
+            // 
+            this.layerToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("regionToolStripMenuItem.Image")));
+            this.layerToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Fuchsia;
+            this.layerToolStripMenuItem.Name = "layerToolStripMenuItem";
+            this.layerToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.layerToolStripMenuItem.Text = "&Layer";
+            this.layerToolStripMenuItem.Click += new System.EventHandler(this.layerToolStripMenuItem_Click);
             // 
             // regionToolStripMenuItem
             // 
@@ -537,6 +548,7 @@ namespace Ultimud
         private System.Windows.Forms.ToolStripButton toolStripButton12;
         private System.Windows.Forms.ToolStripButton toolStripButton13;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
+        private System.Windows.Forms.ToolStripMenuItem layerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem regionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem areaToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;

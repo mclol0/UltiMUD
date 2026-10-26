@@ -50,7 +50,12 @@ namespace Ultimud
 
         void treeView1_MouseClick(object sender, MouseEventArgs e)
         {
-            throw new Exception("The method or operation is not implemented.");
+            if (e.Button == MouseButtons.Right)
+            {
+                TreeNode node = this.treeView1.GetNodeAt(e.Location);
+                if (node != null)
+                    this.treeView1.SelectedNode = node;
+            }
         }
 
         public void Generate(Server server)
@@ -233,6 +238,24 @@ namespace Ultimud
                 parentnode = parentnode.Parent;
             return parentnode;
         }
+        public void Add(object o)
+        {
+            if (o is User)
+            {
+                TreeNode existing = this.GetTreeNode(o);
+                if (existing != null)
+                {
+                    this.Update(o);
+                    return;
+                }
+                TreeNode parentnode = this.treeView1.Nodes["server"].Nodes["players"];
+                TreeNode n = new TreeNode(o.ToString(), parentnode.ImageIndex, parentnode.SelectedImageIndex);
+                n.Tag = o;
+                n.ContextMenuStrip = this.playerMenuStrip;
+                parentnode.Nodes.Add(n);
+                parentnode.Text = "Players (" + parentnode.Nodes.Count + ")";
+            }
+        }
         public void Update(object o)
         {
             if (o is User)
@@ -243,15 +266,20 @@ namespace Ultimud
                     User user = o as User;
                     n.ForeColor = (user.Connected ? Color.Black : Color.Gray);
                     if (user.Connected)
-                        n.Text = user.Character.Name + " (" + user.IpAddress + ")";
+                        n.Text = (user.Character != null && !string.IsNullOrEmpty(user.Character.Name) ? user.Character.Name + " (" + user.IpAddress + ")" : user.ToString());
                 }
             }
         }
-        public void Remove(Object o)
+        public void Remove(object o)
         {
             TreeNode n = this.GetTreeNode(o);
             if (n != null)
-                this.treeView1.Nodes.Remove(n);
+            {
+                if (n.Parent != null)
+                    this.RemoveTreeNode(n);
+                else
+                    this.treeView1.Nodes.Remove(n);
+            }
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -285,18 +313,6 @@ namespace Ultimud
         {
             if (this.ObjectSelected != null)
                 this.ObjectSelected(e.Node.Tag);
-
-            //if (e.Node.Tag is Area)
-            //{
-            //    this.areaCanvas1.SetArea(e.Node.Tag as Area);
-            //}
-            //else
-            //{
-            //    this.selectedObject_ = e.Node.Tag as Object;
-            //    Area area = this.selectedObject_.Area;
-            //    this.areaCanvas1.SetArea(area);
-            //    this.areaCanvas1.GoTo(this.selectedObject_.Location);
-            //}
         }
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
@@ -387,6 +403,7 @@ namespace Ultimud
         private void reloadHelpFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Help.Init(MainForm.Instance.ServerPath, MainForm.Instance.ServerPath);
+            this.LoadHelp();
         }
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -435,7 +452,7 @@ namespace Ultimud
         {
             Help h = new Help();
             Help.HelpFiles.Add(h);
-            this.AddTreeNode(this.treeView1.Nodes["server"].Nodes["help"], h, this.helpMenuStrip);
+            this.AddTreeNode(this.treeView1.Nodes["server"].Nodes["help"], h, this.helpfileMenuStrip);
             if (this.ObjectSelected != null) this.ObjectSelected(h);
         }
         private void newStatBlueprintToolStripMenuItem_Click(object sender, EventArgs e)
@@ -465,6 +482,10 @@ namespace Ultimud
         private void newJobToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.NewGenericObject<Job>(this.treeView1.Nodes["server"].Nodes["jobs"]);
+        }
+        private void newScriptToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.NewGenericObject<Script>(this.treeView1.Nodes["server"].Nodes["scripts"]);
         }
     }
 }

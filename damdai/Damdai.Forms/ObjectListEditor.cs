@@ -32,9 +32,12 @@ namespace Damdai.Forms
             {
                 this.toolStripComboBox1.Items.Clear();
                 this.propertyGrid1.SelectedObject = null;
-                foreach (object o in value)
+                if (value != null)
                 {
-                    this.toolStripComboBox1.Items.Add(o);
+                    foreach (object o in value)
+                    {
+                        this.toolStripComboBox1.Items.Add(o);
+                    }
                 }
             }
         }
@@ -99,7 +102,7 @@ namespace Damdai.Forms
         private void customButton_Click(object sender, EventArgs e)
         {
             Function_void<object> fn = (Function_void<object>)((ToolStripItem)sender).Tag;
-            if (fn != null)
+            if (fn != null && this.propertyGrid1.SelectedObject != null)
                 fn(this.propertyGrid1.SelectedObject);
         }
         public virtual void CreateNewObject(Type type)
@@ -132,7 +135,7 @@ namespace Damdai.Forms
         {
             this.propertyGrid1.SelectedObject = this.toolStripComboBox1.SelectedItem;
             T t = this.propertyGrid1.SelectedObject as T;
-            if (!this.modifiedObjects_.Contains(t))
+            if (t != null && !this.modifiedObjects_.Contains(t))
                 this.modifiedObjects_.Add(t);
         }
         private void propertyGrid1_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)

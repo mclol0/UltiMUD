@@ -127,7 +127,7 @@ namespace Damdai.Forms
             {
                 if (RightToLeft == RightToLeft.No)
                 {
-                    if (Items[tabIndex - 1] != null)
+                    if (tabIndex > 0 && Items[tabIndex - 1] != null)
                     {
                         SelectedItem = Items[tabIndex - 1];
                     }
@@ -138,7 +138,7 @@ namespace Damdai.Forms
                 }
                 else
                 {
-                    if (Items[tabIndex + 1] != null)
+                    if (tabIndex + 1 < Items.Count && Items[tabIndex + 1] != null)
                     {
                         SelectedItem = Items[tabIndex + 1];
                     }
@@ -566,6 +566,10 @@ namespace Damdai.Forms
                 currentItem.StripRect = buttonRect;
                 DEF_START_POS -= (int) textSize.Width;
             }
+            if (currentFont != Font)
+            {
+                currentFont.Dispose();
+            }
         }
 
         private void OnDrawTabPage(Graphics g, FATabStripItem currentItem)
@@ -580,7 +584,8 @@ namespace Damdai.Forms
             textSize.Width += 20;
             RectangleF buttonRect = currentItem.StripRect;
 
-            GraphicsPath path = new GraphicsPath();
+            using (GraphicsPath path = new GraphicsPath())
+            {
             LinearGradientBrush brush;
             int mtop = 3;
 
@@ -620,7 +625,8 @@ namespace Damdai.Forms
 
                 if (currentItem == SelectedItem)
                 {
-                    g.DrawLine(new Pen(brush), buttonRect.Left - 9, buttonRect.Height + 2,
+                    using (Pen pen = new Pen(brush))
+                    g.DrawLine(pen, buttonRect.Left - 9, buttonRect.Height + 2,
                                buttonRect.Left + buttonRect.Width - 1, buttonRect.Height + 2);
                 }
 
@@ -633,11 +639,15 @@ namespace Damdai.Forms
                 if (currentItem == SelectedItem)
                 {
                     //textRect.Y -= 2;
-                    g.DrawString(currentItem.Title, currentFont, new SolidBrush(currentItem.ForeColor), textRect, sf);
+                    using (SolidBrush textBrush = new SolidBrush(currentItem.ForeColor))
+                        g.DrawString(currentItem.Title, currentFont, textBrush, textRect, sf);
+                    brush.Dispose();
                 }
                 else
                 {
-                    g.DrawString(currentItem.Title, currentFont, new SolidBrush(currentItem.ForeColor), textRect, sf);
+                    using (SolidBrush textBrush = new SolidBrush(currentItem.ForeColor))
+                        g.DrawString(currentItem.Title, currentFont, textBrush, textRect, sf);
+                    brush.Dispose();
                 }
             }
 
@@ -683,7 +693,8 @@ namespace Damdai.Forms
 
                 if (currentItem == SelectedItem)
                 {
-                    g.DrawLine(new Pen(brush), buttonRect.Right + 9, buttonRect.Height + 2,
+                    using (Pen pen = new Pen(brush))
+                    g.DrawLine(pen, buttonRect.Right + 9, buttonRect.Height + 2,
                                buttonRect.Right - buttonRect.Width + 1, buttonRect.Height + 2);
                 }
 
@@ -696,11 +707,15 @@ namespace Damdai.Forms
                 if (currentItem == SelectedItem)
                 {
                     textRect.Y -= 1;
-                    g.DrawString(currentItem.Title, currentFont, new SolidBrush(currentItem.ForeColor), textRect, sf);
+                    using (SolidBrush textBrush = new SolidBrush(currentItem.ForeColor))
+                        g.DrawString(currentItem.Title, currentFont, textBrush, textRect, sf);
+                    brush.Dispose();
                 }
                 else
                 {
-                    g.DrawString(currentItem.Title, currentFont, new SolidBrush(currentItem.ForeColor), textRect, sf);
+                    using (SolidBrush textBrush = new SolidBrush(currentItem.ForeColor))
+                        g.DrawString(currentItem.Title, currentFont, textBrush, textRect, sf);
+                    brush.Dispose();
                 }
 
                 //g.FillRectangle(Brushes.Red, textRect);
@@ -708,6 +723,9 @@ namespace Damdai.Forms
 
             #endregion
 
+            }
+            if (currentFont != Font)
+                currentFont.Dispose();
             currentItem.IsDrawn = true;
         }
 

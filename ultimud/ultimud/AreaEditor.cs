@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Ultimud
 {
@@ -15,6 +16,9 @@ namespace Ultimud
     {
         Area area_;
         Random rand_ = new Random();
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern bool DestroyIcon(IntPtr handle);
 
         internal AreaEditor(Area area, Object o)
         {
@@ -31,7 +35,12 @@ namespace Ultimud
             this.areaCanvas1.UndoAvailable += delegate() { this.toolStripButton1.Enabled = true; };
             this.areaCanvas1.UndoUnavailable += delegate() { this.toolStripButton1.Enabled = false; };
             this.toolStripStatusLabel1.Text = null;
-            this.Icon = Icon.FromHandle(Ultimud.Properties.Resources.area.GetHicon());
+            IntPtr hIcon = Ultimud.Properties.Resources.area.GetHicon();
+            using (Icon tmpIcon = Icon.FromHandle(hIcon))
+            {
+                this.Icon = (Icon)tmpIcon.Clone();
+            }
+            DestroyIcon(hIcon);
             if (o != null)
             {
                 this.areaCanvas1.Select(o);
@@ -42,20 +51,6 @@ namespace Ultimud
         internal AreaEditor(Area area)
             : this(area, null)
         {
-            this.areaCanvas1.SelectedEvent += delegate(object o)
-            {
-                this.propertyGrid1.SelectedObject = o;
-                this.toolStripLabel1.Text = o.ToString();
-                foreach (ListViewItem i in this.listView1.Items)
-                {
-                    if (i.Tag == o)
-                    {
-                        i.Selected = true;
-                        i.EnsureVisible();
-                        break;
-                    }
-                }
-            };
         }
 
         void InitializeObjectSelector()
@@ -112,9 +107,18 @@ namespace Ultimud
         void areaCanvas1_SelectedEvent(object o)
         {
             this.propertyGrid1.SelectedObject = o;
-            this.toolStripLabel1.Text = o.ToString();
+            this.toolStripLabel1.Text = (o != null ? o.ToString() : string.Empty);
             this.toolStripButton12.Enabled = true;
             this.toolStripButton13.Enabled = (o is Area.Layer);
+            foreach (ListViewItem i in this.listView1.Items)
+            {
+                if (i.Tag == o)
+                {
+                    i.Selected = true;
+                    i.EnsureVisible();
+                    break;
+                }
+            }
         }
         void Save()
         {
@@ -130,6 +134,10 @@ namespace Ultimud
             this.Save();
         }
         private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            this.New<Area.Region>();
+        }
+        private void layerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.New<Area.Layer>();
         }
@@ -211,7 +219,7 @@ namespace Ultimud
                     switch ((Keys)(int)m.WParam)
                     {
                         case Keys.Delete:
-                            if (this.propertyGrid1.SelectedGridItem.Label == "Image")
+                            if (this.propertyGrid1.SelectedGridItem != null && this.propertyGrid1.SelectedGridItem.Label == "Image")
                             {
                                 this.area_.BackgroundImageSettings.Image = null;
                                 this.propertyGrid1.SelectedGridItem = this.propertyGrid1.SelectedGridItem;

@@ -14,7 +14,9 @@ namespace Ultimud
         string name_;
         long min_;
         long max_;
+#pragma warning disable 0169, 0414
         long default_; //Deprecated.
+#pragma warning restore 0169, 0414
         int regenFrequency_;
         int regenAmount_;
         List<StatFactor> regenFactors_ = new List<StatFactor>();
@@ -215,6 +217,38 @@ namespace Ultimud
         }
         internal static void PostInit()
         {
+            StatBlueprint hp = Server.Instance.Get<StatBlueprint>("hp");
+            if (hp == null)
+            {
+                hp = new StatBlueprint();
+                hp.Name = "Hp";
+                hp.IsPermanent = true;
+                hp.Max = 9999;
+                hp.StartMax = 100;
+                hp.StartCurrent = 100;
+                Server.Instance.Add<StatBlueprint>(hp);
+            }
+            else
+            {
+                hp.IsPermanent = true;
+            }
+
+            StatBlueprint mp = Server.Instance.Get<StatBlueprint>("mp");
+            if (mp == null)
+            {
+                mp = new StatBlueprint();
+                mp.Name = "Mp";
+                mp.IsPermanent = true;
+                mp.Max = 9999;
+                mp.StartMax = 100;
+                mp.StartCurrent = 100;
+                Server.Instance.Add<StatBlueprint>(mp);
+            }
+            else
+            {
+                mp.IsPermanent = true;
+            }
+
             StatBlueprint speed = Server.Instance.Get<StatBlueprint>("speed");
             if (speed == null)
             {
@@ -229,6 +263,11 @@ namespace Ultimud
             else
             {
                 speed.IsPermanent = true;
+            }
+
+            if (Server.Instance.Settings != null && Server.Instance.Settings.SpeedStat == Guid.Empty)
+            {
+                Server.Instance.Settings.SpeedStat = speed.Id;
             }
 
             StatBlueprint sight = Server.Instance.Get<StatBlueprint>("sight");
@@ -284,6 +323,11 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         internal void OnDeserialized(StreamingContext context)
         {
+            if (this.default_ > 0 && this.startCurrent_ == 0 && this.startMax_ == 0)
+            {
+                this.startCurrent_ = this.default_;
+                this.startMax_ = this.default_;
+            }
             this.default_ = 0;
         }
     }

@@ -44,7 +44,7 @@ namespace Damdai.Forms
                 this.richTextBoxEx1.ForeColor = value;
             }
         }
-        public BorderStyle BorderStyle
+        public new BorderStyle BorderStyle
         {
             get { return this.richTextBoxEx1.BorderStyle; }
             set { this.richTextBoxEx1.BorderStyle = value; }

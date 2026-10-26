@@ -15,7 +15,7 @@ namespace Ultimud
         {
         }
 
-        public void CreateNewObject()
+        public override void CreateNewObject(Type type)
         {
             StatBlueprint statBluePrint = new StatBlueprint();
             Damdai.Forms.PropertyGrid propertyGrid = new Damdai.Forms.PropertyGrid();
@@ -35,7 +35,9 @@ namespace Ultimud
 
                 Stat stat = new Stat(statBluePrint.Id);
                 this.toolStripComboBox1.Items.Add(stat);
+                this.toolStripComboBox1.SelectedItem = stat;
                 this.propertyGrid1.SelectedObject = stat;
+                this.AddedObjects.Add(stat);
                 break;
             }
         }

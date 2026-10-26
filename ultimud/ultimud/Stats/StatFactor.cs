@@ -46,6 +46,18 @@ namespace Ultimud
             this.factor_ = factor;
             this.target_ = target;
         }
+
+        public StatFactor(StatFactor other)
+        {
+            this.statId_ = other.statId_;
+            this.factor_ = other.factor_;
+            this.target_ = other.target_;
+        }
+
+        public StatFactor Clone()
+        {
+            return new StatFactor(this.statId_, this.factor_, this.target_);
+        }
         
         [Obfuscation(Exclude = false)]
         public override string ToString()

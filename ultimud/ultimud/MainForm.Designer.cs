@@ -146,13 +146,14 @@ namespace Ultimud
             this.toolStripLabel1.Name = "toolStripLabel1";
             this.toolStripLabel1.Size = new System.Drawing.Size(83, 22);
             this.toolStripLabel1.Text = "Listen Address";
-            this.toolStripLabel1.Visible = false;
+            this.toolStripLabel1.Visible = true;
             // 
             // toolStripTextBox1
             // 
             this.toolStripTextBox1.Name = "toolStripTextBox1";
             this.toolStripTextBox1.Size = new System.Drawing.Size(100, 25);
-            this.toolStripTextBox1.Visible = false;
+            this.toolStripTextBox1.Text = "0.0.0.0";
+            this.toolStripTextBox1.Visible = true;
             // 
             // toolStripLabel2
             // 
@@ -193,7 +194,8 @@ namespace Ultimud
             this.toolStripButton2.Size = new System.Drawing.Size(23, 22);
             this.toolStripButton2.Text = "toolStripButton2";
             this.toolStripButton2.ToolTipText = "Pause Server";
-            this.toolStripButton2.Visible = false;
+            this.toolStripButton2.Visible = true;
+            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
             // toolStripButton3
             // 

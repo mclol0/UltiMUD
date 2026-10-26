@@ -16,10 +16,17 @@ namespace Ultimud
         public class ObjectBlueprintSelector<T> : UITypeEditor where T : Object
         {
             ListBox listbox_ = new ListBox();
+            IWindowsFormsEditorService service_;
+
             public ObjectBlueprintSelector()
             {
                 this.listbox_.BorderStyle = BorderStyle.None;
                 this.listbox_.Sorted = true;
+                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e)
+                {
+                    if (this.service_ != null)
+                        this.service_.CloseDropDown();
+                };
             }
             public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
             {
@@ -41,9 +48,9 @@ namespace Ultimud
                         this.listbox_.SelectedItem = t;
                 }
 
-                IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e) { service.CloseDropDown(); };
-                service.DropDownControl(this.listbox_);
+                this.service_ = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+                if (this.service_ != null)
+                    this.service_.DropDownControl(this.listbox_);
                 if (this.listbox_.SelectedItem != null)
                     return (this.listbox_.SelectedItem is string ? null : this.listbox_.SelectedItem);
 
@@ -55,10 +62,17 @@ namespace Ultimud
         public class ObjectBlueprintIdSelector<T> : UITypeEditor where T : Object
         {
             ListBox listbox_ = new ListBox();
+            IWindowsFormsEditorService service_;
+
             public ObjectBlueprintIdSelector()
             {
                 this.listbox_.BorderStyle = BorderStyle.None;
                 this.listbox_.Sorted = true;
+                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e)
+                {
+                    if (this.service_ != null)
+                        this.service_.CloseDropDown();
+                };
             }
             public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
             {
@@ -79,9 +93,9 @@ namespace Ultimud
                         this.listbox_.SelectedItem = t;
                 }
 
-                IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e) { service.CloseDropDown(); };
-                service.DropDownControl(this.listbox_);
+                this.service_ = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+                if (this.service_ != null)
+                    this.service_.DropDownControl(this.listbox_);
                 if (this.listbox_.SelectedItem != null)
                     return ((Object)this.listbox_.SelectedItem).Id;
 

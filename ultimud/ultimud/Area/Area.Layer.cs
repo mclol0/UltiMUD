@@ -31,6 +31,8 @@ namespace Ultimud
             {
                 OnObjectMove,
                 //OnObjectMoved,
+                OnEnter,
+                OnLeave,
             }
 
             #region Members
@@ -44,11 +46,11 @@ namespace Ultimud
             int fillChar2Percent_;
             bool fillChar2Randomize_;
             Dictionary<Point, bool> overlay_ = new Dictionary<Point, bool>();
-            char ceilingChar_; //Deprecated.
-            Telnet.Color ceilingColor_; //Deprecated.
+            char ceilingChar_;
+            Telnet.Color ceilingColor_;
             int height_;
             WeatherConditions weather_ = new WeatherConditions();
-            Dictionary<LayerScriptType, string> layerscripts_ = new Dictionary<LayerScriptType, string>();
+            protected Dictionary<LayerScriptType, string> layerscripts_ = new Dictionary<LayerScriptType, string>();
             //List<StatusEffect> applystatuseffects_ = new List<StatusEffect>();
 
             [NonSerialized]
@@ -129,6 +131,23 @@ namespace Ultimud
             {
                 get { return this.fillChar2Randomize_; }
                 set { this.fillChar2Randomize_ = value; }
+            }
+
+            [Category("Appearance")]
+            [Description("The ASCII character used for the ceiling when viewed from outside an indoor layer.")]
+            public char CeilingChar
+            {
+                get { return this.ceilingChar_; }
+                set { this.ceilingChar_ = value; }
+            }
+
+            [Category("Appearance")]
+            [Description("The color of CeilingChar.")]
+            [DefaultValue(Telnet.Color.Reset)]
+            public Telnet.Color CeilingColor
+            {
+                get { return this.ceilingColor_; }
+                set { this.ceilingColor_ = value; }
             }
 
             [TypeConverter(typeof(Damdai.TypeConverters.BitArrayConverter<LayerFlag>))]
@@ -368,6 +387,7 @@ namespace Ultimud
                 for (int i = 1; i <= this.Points.Count; i++)
                 {
                     Point p2 = this.Points[i % this.Points.Count];
+                    if (x >= Math.Min(p1.X, p2.X) && x <= Math.Max(p1.X, p2.X) && y >= Math.Min(p1.Y, p2.Y) && y <= Math.Max(p1.Y, p2.Y) && (long)(x - p1.X) * (p2.Y - p1.Y) == (long)(y - p1.Y) * (p2.X - p1.X)) return true;
                     if (y > Math.Min(p1.Y, p2.Y))
                     {
                         if (y <= Math.Max(p1.Y, p2.Y))
@@ -518,7 +538,12 @@ namespace Ultimud
 
                         if (this.Contains(x, y))
                         {
-                            if (this.FillChar2 > 0 && ((rand != null && rand.Next(100) <= this.FillChar2Percent) || this.Overlay.ContainsKey(new Point(x, y))))
+                            if (this.LayerFlags.Get((int)LayerFlag.Indoors) && this.CeilingChar > 0 && (map.Pov == null || !this.Contains(map.Pov.Location.Point)))
+                            {
+                                map.Grid[X, Y] = this.CeilingChar + " ";
+                                map.Color[X, Y] = this.CeilingColor;
+                            }
+                            else if (this.FillChar2 > 0 && ((rand != null && rand.Next(100) <= this.FillChar2Percent) || this.Overlay.ContainsKey(new Point(x, y))))
                             {
                                 map.Grid[X, Y] = this.FillChar2 + " ";
                                 map.Color[X, Y] = this.FillColor2;
@@ -759,7 +784,19 @@ namespace Ultimud
             
             public override void Send(string str)
             {
-                base.Send(str);
+                this.Send(str, null);
+            }
+
+            public override void Send(string str, IObject sender)
+            {
+                if (this.Area != null)
+                {
+                    foreach (Character ch in this.Area.GetChildren<Character>())
+                    {
+                        if (this.Contains(ch.Location.Point) && !ch.Incapacitated)
+                            ch.Send(str, sender);
+                    }
+                }
             }
             
             [Obfuscation(Exclude = false)]
@@ -854,7 +891,7 @@ namespace Ultimud
             {
                 List<T> temp = list;
                 list = new List<T>(temp.Count);
-                foreach (T t in list)
+                foreach (T t in temp)
                     if (!t.ObjectFlags.Get((int)Object.ObjFlags.Invisible))
                         list.Add(t);
             }

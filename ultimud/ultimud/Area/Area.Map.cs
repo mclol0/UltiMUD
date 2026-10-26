@@ -46,6 +46,11 @@ namespace Ultimud
             }
             #endregion
 
+            public Map(Area area, Object o)
+                : this(o)
+            {
+            }
+
             public Map(Object o)
             {
                 this.pov_ = o;
@@ -153,7 +158,8 @@ namespace Ultimud
                     {
                         if (x == (this.Size / 2) && y == (this.Size / 2))
                         {
-                            str += Server.Instance.Settings.GetColorCode(Settings.Text.MapColorSelf) + this.pov_.Name.Substring(0, 2).ToUpper();
+                            string selfLabel = (string.IsNullOrEmpty(this.pov_.Name) ? "@ " : (this.pov_.Name.Length >= 2 ? this.pov_.Name.Substring(0, 2) : this.pov_.Name.PadRight(2))).ToUpper();
+                            str += Server.Instance.Settings.GetColorCode(Settings.Text.MapColorSelf) + selfLabel;
                             color = Telnet.Color.BrightCyan;
                             //bgColor = Telnet.BgColor.BgDefault;
                         }

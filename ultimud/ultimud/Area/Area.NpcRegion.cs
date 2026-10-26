@@ -76,7 +76,7 @@ namespace Ultimud
             [Browsable(false)]
             public new int FillChar2Percent
             {
-                get { return this.FillChar2Percent; }
+                get { return base.FillChar2Percent; }
             }
 
             [Browsable(false)]

@@ -13,7 +13,7 @@ namespace Ultimud
     {
         public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
         {
-            return UITypeEditorEditStyle.DropDown;
+            return UITypeEditorEditStyle.Modal;
         }
 
         public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)

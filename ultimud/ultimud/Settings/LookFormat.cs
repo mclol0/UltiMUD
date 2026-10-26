@@ -12,7 +12,7 @@ namespace Ultimud
     [Obfuscation(Exclude = true)]
     public class LookFormat
     {
-        string generalFormat_; //Deprecated.
+        string generalFormat_ = "{color:brightcyan}{location}{color:reset} [{weather}]\r\n{map}\r\n{description}\r\n{objects}";
         string objectFormat_ = "{name}";
         string pcFormat_ = "{color:brightwhite}{name}{color:reset} ({color:gray}{position}{color:reset})";
         string npcFormat_ = "{name} ({color:gray}{position}{color:reset})";
@@ -21,6 +21,13 @@ namespace Ultimud
         string npcformatplural_ = "{count} {name}";
 
         #region Properties
+        [Description("General format template for look descriptions.")]
+        public string GeneralFormat
+        {
+            get { return this.generalFormat_; }
+            set { this.generalFormat_ = value; }
+        }
+
         [Description(@"The output of items in the Character.GenerateLookDescription function.
   {name} - Item name.
   {distance} - Item distance.
@@ -109,7 +116,7 @@ namespace Ultimud
             else if (o is Character)
                 str = (count > 1 && !string.IsNullOrEmpty(this.PcFormatPlural) ? this.PcFormatPlural : this.PcFormat);
             else
-                str = (count > 1 && !string.IsNullOrEmpty(this.ItemFormatPlural) ? this.ItemFormatPlural : this.ItemFormat); ;
+                str = (count > 1 && !string.IsNullOrEmpty(this.ItemFormatPlural) ? this.ItemFormatPlural : this.ItemFormat);
 
             if (string.IsNullOrEmpty(str))
                 return null;
@@ -124,15 +131,16 @@ namespace Ultimud
             {
                 str = str.Replace("{name}", o.Name);
                 str = str.Replace("{position}", o.Position.ToString());
-                if (str.Contains("{distance}"))
+                if (ch != null && str.Contains("{distance}"))
                     str = str.Replace("{distance}", ch.Distance(o).ToString());
-                if (str.Contains("{location}"))
+                if (o.Location != null && str.Contains("{location}"))
                     str = str.Replace("{location}", o.Location.Point.X + "," + o.Location.Point.Y);
-                if (str.Contains("{direction}"))
+                if (ch != null && o.Location != null && str.Contains("{direction}"))
                     str = str.Replace("{direction}", ch.GetDirection(o.Location.Point).ToString());
-                if (str.Contains("{dir}"))
+                if (ch != null && o.Location != null && str.Contains("{dir}"))
                     str = str.Replace("{dir}", ((Area.ShortDirection)ch.GetDirection(o.Location.Point)).ToString());
-                str = Stat.ResolveVars(str, o.Stats.Values);
+                if (o.Stats != null)
+                    str = Stat.ResolveVars(str, o.Stats.Values);
             }
 
             return str;
@@ -142,6 +150,14 @@ namespace Ultimud
         public override string ToString()
         {
             return null;
+        }
+
+        [System.Runtime.Serialization.OnDeserialized]
+        [Obfuscation(Exclude = false)]
+        internal void OnDeserialized(System.Runtime.Serialization.StreamingContext context)
+        {
+            if (string.IsNullOrEmpty(this.generalFormat_))
+                this.generalFormat_ = "{color:brightcyan}{location}{color:reset} [{weather}]\r\n{map}\r\n{description}\r\n{objects}";
         }
     }
 }

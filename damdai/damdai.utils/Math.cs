@@ -9,7 +9,9 @@ namespace Damdai
     {
         public static float Slope(Point p1, Point p2)
         {
-            return (p2.Y - p1.Y) / (p2.X = p1.X);
+            if (p2.X == p1.X)
+                return 0f;
+            return (float)(p2.Y - p1.Y) / (p2.X - p1.X);
         }
         public static List<Point> Line(Point p1, Point p2)
         {

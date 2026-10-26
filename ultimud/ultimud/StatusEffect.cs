@@ -26,14 +26,18 @@ namespace Ultimud
         #region Members
         Guid blueprintId_;
         int chance_ = 100;
+#pragma warning disable 0169, 0414
         int duration_; //Deprecated.
         int updateFrequency_; //Deprecated.
+#pragma warning restore 0169, 0414
         List<StatModifier> statMods_ = new List<StatModifier>();
         List<StatFactor> offensiveDurationFactors_ = new List<StatFactor>();
         List<StatFactor> defensiveDurationFactors_ = new List<StatFactor>();
         bool permanent_;
+#pragma warning disable 0169, 0414
         DateTime lastUpdate_; //Deprecated.
         DateTime created_; //Deprecated.
+#pragma warning restore 0169, 0414
         BitArray objectFlags_ = new BitArray(16);
         Object.Positions position_ = Object.Positions.None;
         BitArray removeOnPosition_ = new BitArray(16);
@@ -149,7 +153,7 @@ namespace Ultimud
         {
             get
             {
-                return (int)this.Duration.Length.TotalSeconds;
+                return (this.Duration != null ? (int)this.Duration.Length.TotalSeconds : 0);
             }
         }
 
@@ -298,7 +302,11 @@ namespace Ultimud
         {
             StatusEffect effect = other.MemberwiseClone() as StatusEffect;
             effect.StatModifications = new List<StatModifier>();
-            effect.StatModifications.AddRange(other.StatModifications);
+            if (other.StatModifications != null)
+            {
+                foreach (StatModifier mod in other.StatModifications)
+                    effect.StatModifications.Add(mod.Clone());
+            }
             effect.ObjectFlags = new BitArray(16);
             effect.ObjectFlags = (BitArray)other.ObjectFlags.Clone();
             effect.RemoveOnPosition = new BitArray(16);
@@ -309,6 +317,7 @@ namespace Ultimud
                 effect.UpdateTimer = new Timer(other.UpdateTimer.Length);
             if (other.Duration != null)
                 effect.Duration = new Timer(other.Duration.Length);
+            effect.lua_ = new Lua();
 
             return effect;
         }
@@ -338,7 +347,7 @@ namespace Ultimud
             {
                 StatBlueprint statbp = Server.Instance.Get<StatBlueprint>(statid);
                 Stat stat = o.GetStat(statid);
-                if (stat == null || stat.Current <= statbp.Min)
+                if (stat == null || (statbp != null && stat.Current <= statbp.Min))
                     return true;
                 return false;
             }))
@@ -405,24 +414,53 @@ namespace Ultimud
                         StatusEffect effect = target.GetStatusEffect(this.BlueprintId);
                         if (effect == null)
                         {
-                            target.StatusEffects.Add(StatusEffect.Create(this));
+                            effect = StatusEffect.Create(this);
+                            if (effect.Duration != null)
+                            {
+                                long factorAdjustment = 0;
+                                if (actor != null && effect.OffensiveDurationFactors != null)
+                                {
+                                    foreach (StatFactor factor in effect.OffensiveDurationFactors)
+                                    {
+                                        Stat stat = actor.GetStat(factor.StatId);
+                                        if (stat != null)
+                                            factorAdjustment += factor.Calculate(stat);
+                                    }
+                                }
+                                if (target != null && effect.DefensiveDurationFactors != null)
+                                {
+                                    foreach (StatFactor factor in effect.DefensiveDurationFactors)
+                                    {
+                                        Stat stat = target.GetStat(factor.StatId);
+                                        if (stat != null)
+                                            factorAdjustment -= factor.Calculate(stat);
+                                    }
+                                }
+                                if (factorAdjustment != 0)
+                                {
+                                    double totalSecs = System.Math.Max(1.0, effect.Duration.Length.TotalSeconds + factorAdjustment);
+                                    effect.Duration = new Timer(TimeSpan.FromSeconds(totalSecs));
+                                }
+                            }
+                            target.StatusEffects.Add(effect);
                             if (!bp.StartMessage.Empty)
                                 target.Area.Send(bp.StartMessage, target, actor, 0);
                             else if (bp.Visible)
                             {
                                 target.Send("You have been affected by " + bp.Name + "!");
-                                if (actor != target)
+                                if (actor != null && actor != target)
                                     actor.Send(target.Name + " has been affected by " + bp.Name + "!");
                             }
 
-                            this.SetObjectFlags(target);
-                            this.SetPosition(target);
-                            if (this.UndoStatModsOnRemove)
-                                StatModifier.Apply(this.StatModifications, target, actor, target, null, false);
+                            effect.SetObjectFlags(target);
+                            effect.SetPosition(target);
+                            if (effect.UndoStatModsOnRemove)
+                                StatModifier.Apply(effect.StatModifications, target, actor, target, null, false);
                         }
                         else
                         {
-                            //effect.created_ = DateTime.Now;
+                            if (effect.Duration != null)
+                                effect.Duration.Reset();
                         }
                     }
                     this.DoScript(ScriptType.OnStart, actor, target);

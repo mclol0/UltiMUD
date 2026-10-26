@@ -13,9 +13,23 @@ namespace Ultimud
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                if (this.redrawtimer_ != null)
+                {
+                    this.redrawtimer_.Stop();
+                    this.redrawtimer_.Dispose();
+                }
+                if (this.cursors_ != null)
+                {
+                    foreach (System.Windows.Forms.Cursor c in this.cursors_.Values)
+                        c.Dispose();
+                    this.cursors_.Clear();
+                }
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
             base.Dispose(disposing);
         }

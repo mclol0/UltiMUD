@@ -19,3 +19,25 @@ C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\obj\Release\UltiMUD Server.XmlSerializers.dll
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\UltiMUD Server.exe
 C:\Users\damdai\Documents\Visual Studio 2005\UltiMUD\UltiMUD\bin\Release\UltiMUD Server.XmlSerializers.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\lua51.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\luanet.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\UltiMUD.exe.config
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\UltiMUD.exe
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\Damdai.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\Damdai.Forms.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\ICSharpCode.SharpZipLib.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\LuaInterface.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\Damdai.Forms.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\Damdai.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\bin\Release\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.AreaCanvas.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.AreaEditor.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.BoundarySelector.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.MainForm.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.ObjectExplorer.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.PlayerMonitor.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.Properties.Resources.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\Ultimud.UserMonitor.resources
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\UltiMUD.csproj.GenerateResource.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\UltiMUD.exe
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\UltiMUD\obj\Release\UltiMUD.csprojResolveAssemblyReference.cache

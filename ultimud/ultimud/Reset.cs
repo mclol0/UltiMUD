@@ -21,10 +21,12 @@ namespace Ultimud
         string message_;
         DateTime lastUpdate_;
         protected List<Guid> objectIds_ = new List<Guid>();
+#pragma warning disable 0169, 0414
         bool closed_; //Deprecated.
         bool closeable_; //Deprecated.
         bool locked_; //Deprecated.
         Guid keyId_; //Deprecated.
+#pragma warning restore 0169, 0414
         Timer respawnTimer_ = new Timer(new TimeSpan(0, 0, 60));
 
         #region Properties

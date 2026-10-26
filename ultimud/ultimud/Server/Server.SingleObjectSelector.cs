@@ -19,6 +19,7 @@ namespace Ultimud
             Panel panel_ = new Panel();
             ToolStrip toolstrip_ = new ToolStrip();
             ListBox listbox_ = new ListBox();
+            IWindowsFormsEditorService service_;
 
             public SingleObjectSelector()
             {
@@ -38,15 +39,26 @@ namespace Ultimud
                 });
                 this.toolstrip_.Items.Add("Delete", null, delegate(object sender, EventArgs args)
                 {
-                    IIdentifiable o = this.listbox_.SelectedItem as IIdentifiable;
-                    Server.Instance.DataSets[typeof(T)].Remove(o.Id);
-                    this.listbox_.Items.Remove(o);
+                    if (this.listbox_.SelectedItem != null)
+                    {
+                        IIdentifiable o = this.listbox_.SelectedItem as IIdentifiable;
+                        if (o != null)
+                        {
+                            Server.Instance.DataSets[typeof(T)].Remove(o.Id);
+                            this.listbox_.Items.Remove(o);
+                        }
+                    }
                 });
                 this.listbox_.Dock = DockStyle.Fill;
                 this.listbox_.BorderStyle = BorderStyle.None;
                 this.listbox_.Sorted = true;
                 this.listbox_.BringToFront();
                 this.listbox_.SelectionMode = SelectionMode.One;
+                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e)
+                {
+                    if (this.service_ != null)
+                        this.service_.CloseDropDown();
+                };
             }
 
             public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
@@ -62,19 +74,19 @@ namespace Ultimud
                 foreach (T t in Server.Instance.DataSets[type].Values)
                 {
                     this.listbox_.Items.Add(t);
-                    if (t.Id == (Guid)value)
+                    if (value is Guid && t.Id == (Guid)value)
                         this.listbox_.SelectedItem = t;
                 }
 
-                IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                //this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e) { service.CloseDropDown(); };
-                service.DropDownControl(this.panel_);
+                this.service_ = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+                if (this.service_ != null)
+                    this.service_.DropDownControl(this.panel_);
 
                 T selection = this.listbox_.SelectedItem as T;
                 if (selection != null)
                     return selection.Id;
 
-                return null;
+                return value;
             }
         }
     }

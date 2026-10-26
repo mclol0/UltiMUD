@@ -74,7 +74,6 @@ namespace Ultimud
 
         [Editor(typeof(FlagEditor<WindSpeeds>), typeof(UITypeEditor))]
         [TypeConverter(typeof(Damdai.TypeConverters.BitArrayConverter<WindSpeeds>))]
-        [Browsable(false)]
         public BitArray PossibleWindSpeeds
         {
             get { return this.possibleWindSpeeds_; }
@@ -128,7 +127,8 @@ namespace Ultimud
         {
             string temp = (Damdai.Collections.Util.IsEmpty(this.possibleTemperatures_) ? "n/a" : this.CurrentTemp.ToString());
             string cond = (Damdai.Collections.Util.IsEmpty(this.possibleConditions_) ? "n/a" : this.CurrentCondition.ToString());
-            return "Temp: " + temp + ", Condition: " + cond;// +", Wind: " + this.CurrentWindSpeed;
+            string wind = (Damdai.Collections.Util.IsEmpty(this.possibleWindSpeeds_) ? "n/a" : this.CurrentWindSpeed.ToString());
+            return "Temp: " + temp + ", Condition: " + cond + ", Wind: " + wind;
         }
 
         [Obfuscation(Exclude = false)]
@@ -139,8 +139,8 @@ namespace Ultimud
                 this.UpdateTemp(o);
             if (Server.RandomNumber.Next(chance) == 1)
                 this.UpdateCondition(o);
-            //if (Server.RandomNumber.Next(chance) == 1)
-            //    this.UpdateWind(area);
+            if (Server.RandomNumber.Next(chance) == 1)
+                this.UpdateWind(o);
         }
         
         [Obfuscation(Exclude = false)]
@@ -285,9 +285,53 @@ namespace Ultimud
             }
 
             if (this.NextWindSpeed < this.CurrentWindSpeed)
-                --this.CurrentWindSpeed;
+            {
+                switch (--this.CurrentWindSpeed)
+                {
+                    case WindSpeeds.None:
+                        o.Send("The wind dies down completely.");
+                        break;
+                    case WindSpeeds.Calm:
+                        o.Send("The breeze settles into a calm air.");
+                        break;
+                    case WindSpeeds.Breezy:
+                        o.Send("The strong winds subside to a gentle breeze.");
+                        break;
+                    case WindSpeeds.Windy:
+                        o.Send("The storm winds weaken to a steady wind.");
+                        break;
+                    case WindSpeeds.ThunderStorm:
+                        o.Send("The tropical storm weakens into a thunderstorm.");
+                        break;
+                    case WindSpeeds.TropicalStorm:
+                        o.Send("The hurricane-force winds ease to a tropical storm.");
+                        break;
+                }
+            }
             else if (this.NextWindSpeed > this.CurrentWindSpeed)
-                ++this.CurrentWindSpeed;
+            {
+                switch (++this.CurrentWindSpeed)
+                {
+                    case WindSpeeds.Calm:
+                        o.Send("The air begins to stir slightly.");
+                        break;
+                    case WindSpeeds.Breezy:
+                        o.Send("A gentle breeze picks up.");
+                        break;
+                    case WindSpeeds.Windy:
+                        o.Send("The wind begins blowing strongly.");
+                        break;
+                    case WindSpeeds.ThunderStorm:
+                        o.Send("Thunder rumbles as storm winds whip through the air.");
+                        break;
+                    case WindSpeeds.TropicalStorm:
+                        o.Send("Fierce tropical storm winds howl around you!");
+                        break;
+                    case WindSpeeds.Hurricane:
+                        o.Send("Violent hurricane-force winds tear through the area!");
+                        break;
+                }
+            }
         }
         
         [Obfuscation(Exclude = false)]

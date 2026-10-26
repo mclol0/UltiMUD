@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("")]
 [assembly: AssemblyCopyright("2007 DAMDAI")]
 [assembly: AssemblyTrademark("")]
+// [assembly: InternalsVisibleTo("SmokeTest")]
 [assembly: AssemblyCulture("")]		
 
 //
@@ -54,9 +55,9 @@ using System.Runtime.InteropServices;
 //   (*) Delay Signing is an advanced option - see the Microsoft .NET Framework
 //       documentation for more information on this.
 //
-[assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile("")]
-[assembly: AssemblyKeyName("")]
+//[assembly: AssemblyDelaySign(false)]
+//[assembly: AssemblyKeyFile("")]
+//[assembly: AssemblyKeyName("")]
 
 //
 // Use the attributes below to control the COM visibility of your assembly. By

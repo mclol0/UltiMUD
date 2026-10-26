@@ -14,11 +14,17 @@ namespace Ultimud
     class StatusEffectSelector : UITypeEditor
     {
         ListBox listBox_ = new ListBox();
+        IWindowsFormsEditorService service_;
 
         public StatusEffectSelector()
         {
             this.listBox_.BorderStyle = BorderStyle.None;
             this.listBox_.Sorted = true;
+            this.listBox_.MouseClick += delegate(object sender, MouseEventArgs e)
+            {
+                if (this.service_ != null)
+                    this.service_.CloseDropDown();
+            };
         }
 
         public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
@@ -39,11 +45,10 @@ namespace Ultimud
                 Guid statId = (Guid)value;
                 StatusEffectBlueprint currentStat = Server.Instance.Get<StatusEffectBlueprint>(statId);
                 if (currentStat != null)
-                    this.listBox_.SelectedItem = currentStat.Name;
+                    this.listBox_.SelectedItem = currentStat;
 
-                IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                this.listBox_.MouseClick += delegate(object sender, MouseEventArgs e) { service.CloseDropDown(); };
-                service.DropDownControl(this.listBox_);
+                this.service_ = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+                this.service_.DropDownControl(this.listBox_);
 
                 if (this.listBox_.SelectedItem != null)
                 {

@@ -5,11 +5,11 @@ using System.Diagnostics;
 
 namespace Ultimud
 {
-    internal partial class MessageBoard
+    public partial class MessageBoard
     {
         [Serializable]
         [Obfuscation(Exclude = true)]
-        internal class Post
+        public class Post
         {
             long id_;
             DateTime date_;
@@ -32,9 +32,17 @@ namespace Ultimud
             {
                 get { return this.from_; }
             }
+            public string To
+            {
+                get { return this.to_; }
+            }
             public string Subject
             {
                 get { return this.subject_; }
+            }
+            public string Body
+            {
+                get { return this.body_; }
             }
             public Guid PlayerId
             {
@@ -56,7 +64,13 @@ namespace Ultimud
             [Obfuscation(Exclude = false)]
             static public bool GetTo(User user)
             {
-                user.CurrentCommandArgs.Add("all");
+                if (string.IsNullOrEmpty(user.Command))
+                {
+                    user.CurrentCommandArgs.Add("all");
+                    return true;
+                }
+                string arg = user.GetArgument();
+                user.CurrentCommandArgs.Add(string.IsNullOrEmpty(arg) ? "all" : arg);
                 return true;
             }
             

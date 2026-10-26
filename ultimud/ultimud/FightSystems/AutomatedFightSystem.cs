@@ -128,7 +128,7 @@ namespace Ultimud
                         foreach (Guid aid in ch.Abilities.Keys)
                         {
                             Ability a = Server.Instance.Get<Ability>(aid);
-                            if (a.Auto && a.Style == Ability.Styles.Aggressive && a.CheckRange(pair.Key, pair.Value) && Server.RandomNumber.Next(4) == 1)
+                            if (a != null && a.Auto && a.Style == Ability.Styles.Aggressive && a.CheckRange(pair.Key, pair.Value) && Server.RandomNumber.Next(4) == 1)
                             {
                                 ability = a;
                                 break;
@@ -142,7 +142,7 @@ namespace Ultimud
                         {
                             Item item = null;
                             if (pair.Key is Character)
-                                item = ((Character)pair.Key).GetEquippedItem(this.DefaultAbility.BodyPart);
+                                item = ((Character)pair.Key).GetEquippedItem(ability.BodyPart);
                             ability.OnPerform(pair.Key, pair.Value, true, item);
                         }
                     }
@@ -186,19 +186,32 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public void Merge(IFightSystem other)
         {
-            foreach (KeyValuePair<Object, Object> pair in other.Participants)
-                if (!this.Participants.ContainsKey(pair.Key))
-                    this.Participants.Add(pair.Key, pair.Value);
-            other = this;
+            if (other == null || other == this)
+                return;
+
+            AutomatedFightSystem otherAuto = other as AutomatedFightSystem;
+            if (otherAuto != null && otherAuto.updateTimer_ != null)
+                otherAuto.updateTimer_.Stop();
+
+            Dictionary<Object, Object> copy = new Dictionary<Object, Object>(other.Participants);
+            other.Participants.Clear();
+            foreach (KeyValuePair<Object, Object> pair in copy)
+            {
+                pair.Key.DieEvent -= other.RemoveParticipant;
+                this.AddParticipant(pair.Key, pair.Value);
+            }
         }
 
         [Obfuscation(Exclude = false)]
         public void AddParticipant(Object o, Object target)
         {
-            this.participants_.Add(o, target);
+            if (!this.participants_.ContainsKey(o))
+            {
+                this.participants_.Add(o, target);
+                o.DieEvent += new Object.DieHandler(this.RemoveParticipant);
+            }
             o.FightSystem = this;
             target.FightSystem = this;
-            o.DieEvent += new Object.DieHandler(this.RemoveParticipant);
         }
 
         [Obfuscation(Exclude = false)]
@@ -229,9 +242,10 @@ namespace Ultimud
             foreach (Guid abilityId in ability.Defense)
             {
                 Ability defenseAbility = Server.Instance.Get<Ability>(abilityId);
-                if (defenseAbility != null)
+                if (defenseAbility != null && (!(target is Character) || ((Character)target).Abilities.ContainsKey(defenseAbility.Id)))
                 {
-                    return defenseAbility.OnPerform(target, actor, false, null);
+                    if (defenseAbility.OnPerform(target, actor, false, null))
+                        return true;
                 }
             }
 

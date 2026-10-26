@@ -40,7 +40,9 @@ namespace Ultimud
         Dictionary<ScriptType, string> itemscripts_ = new Dictionary<ScriptType, string>();
         int maxrange_;
         uint minrange_;
+#pragma warning disable 0169, 0414
         string type_; //Deprecated.
+#pragma warning restore 0169, 0414
 
         [Obfuscation(Exclude = false)]
         [NonSerialized]
@@ -287,15 +289,46 @@ namespace Ultimud
         public void Init(Item other)
         {
             base.Init(other);
-            this.UserStatMods = other.UserStatMods;
-            this.TargetStatMods = other.TargetStatMods;
-            this.AddUserStatusEffects = other.AddUserStatusEffects;
-            this.AddTargetStatusEffects = other.AddTargetStatusEffects;
-            this.RemoveTargetStatusEffects = other.RemoveTargetStatusEffects;
-            this.RaceRestrictions = other.RaceRestrictions;
-            this.JobRestrictions = other.JobRestrictions;
-            this.AbilityRequirements = other.AbilityRequirements;
-            this.StatRequirements = other.StatRequirements;
+            this.UserStatMods = new List<StatModifier>();
+            if (other.UserStatMods != null)
+            {
+                foreach (StatModifier mod in other.UserStatMods)
+                    this.UserStatMods.Add(mod.Clone());
+            }
+            this.TargetStatMods = new List<StatModifier>();
+            if (other.TargetStatMods != null)
+            {
+                foreach (StatModifier mod in other.TargetStatMods)
+                    this.TargetStatMods.Add(mod.Clone());
+            }
+            this.AbilityStatMods = new List<StatModifier>();
+            if (other.AbilityStatMods != null)
+            {
+                foreach (StatModifier mod in other.AbilityStatMods)
+                    this.AbilityStatMods.Add(mod.Clone());
+            }
+            this.AddUserStatusEffects = new List<StatusEffect>();
+            if (other.AddUserStatusEffects != null)
+            {
+                foreach (StatusEffect se in other.AddUserStatusEffects)
+                    this.AddUserStatusEffects.Add(StatusEffect.Create(se));
+            }
+            this.AddTargetStatusEffects = new List<StatusEffect>();
+            if (other.AddTargetStatusEffects != null)
+            {
+                foreach (StatusEffect se in other.AddTargetStatusEffects)
+                    this.AddTargetStatusEffects.Add(StatusEffect.Create(se));
+            }
+            this.RemoveTargetStatusEffects = new List<StatusEffect>();
+            if (other.RemoveTargetStatusEffects != null)
+            {
+                foreach (StatusEffect se in other.RemoveTargetStatusEffects)
+                    this.RemoveTargetStatusEffects.Add(StatusEffect.Create(se));
+            }
+            this.RaceRestrictions = other.RaceRestrictions != null ? new List<Guid>(other.RaceRestrictions) : new List<Guid>();
+            this.JobRestrictions = other.JobRestrictions != null ? new List<Guid>(other.JobRestrictions) : new List<Guid>();
+            this.AbilityRequirements = other.AbilityRequirements != null ? new List<Guid>(other.AbilityRequirements) : new List<Guid>();
+            this.StatRequirements = other.StatRequirements != null ? new List<Stat>(other.StatRequirements) : new List<Stat>();
         }
         public static Item Create(Item blueprint)
         {
@@ -371,10 +404,10 @@ namespace Ultimud
                 return false;
             if (this.JobRestrictions != null && this.JobRestrictions.Count > 0 && !this.JobRestrictions.Contains(ch.JobId))
                 return false;
-            if (this.AbilityRequirements != null && this.AbilityRequirements.Count > 0 && !this.AbilityRequirements.Exists(delegate(Guid id) { return ch.Abilities.ContainsKey(id); }))
+            if (this.AbilityRequirements != null && this.AbilityRequirements.Count > 0 && !this.AbilityRequirements.TrueForAll(delegate(Guid id) { return ch.Abilities.ContainsKey(id); }))
                 return false;
 
-            if (this.StatRequirements != null && this.StatRequirements.Count > 0 && !this.StatRequirements.Exists(delegate(Stat statreq) 
+            if (this.StatRequirements != null && this.StatRequirements.Count > 0 && !this.StatRequirements.TrueForAll(delegate(Stat statreq) 
             {
                 Stat stat;
                 if (ch.Stats.TryGetValue(statreq.Id, out stat) && stat.Current >= statreq.Current && stat.Max >= statreq.Max)

@@ -3,3 +3,8 @@ C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\sour
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.csprojResolveAssemblyReference.cache
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.dll
 C:\Users\damdai\Documents\Visual Studio 2005\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\bin\Release\LuaInterface.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\bin\Release\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Release\LuaInterface.csprojResolveAssemblyReference.cache

@@ -50,6 +50,14 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         [NonSerialized]
+        bool paused_;
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        string serverPath_;
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
         static Random randomNumberGenerator_ = new Random();
 
         [Obfuscation(Exclude = false)]
@@ -65,6 +73,36 @@ namespace Ultimud
         #region Properties
         [Browsable(false)]
         public bool IsRunning
+        {
+            get { return this.running_; }
+        }
+
+        [Browsable(false)]
+        public bool IsPaused
+        {
+            get { return this.paused_; }
+        }
+
+        public void Pause()
+        {
+            this.paused_ = !this.paused_;
+        }
+
+        [Browsable(false)]
+        internal string ServerPath
+        {
+            get
+            {
+                if (MainForm.Instance != null)
+                    return MainForm.Instance.ServerPath;
+                if (!string.IsNullOrEmpty(this.serverPath_))
+                    return this.serverPath_;
+                return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data\\muds\\" + String.ReplaceChars((this.Settings != null && !string.IsNullOrEmpty(this.Settings.Name)) ? this.Settings.Name : "Unnamed", "/\\:*?\"<>|", '_'));
+            }
+        }
+
+        [Browsable(false)]
+        internal bool UnusedRunning
         {
             get { return this.running_; }
         }
@@ -153,6 +191,7 @@ namespace Ultimud
         void Init(string loadpath, string serverpath)
         {
             instance_ = this;
+            this.serverPath_ = serverpath;
             this.clock_ = new System.Timers.Timer(1000);
             Debug.Assert(this.DataSets != null, "DataSets is null.");
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -222,7 +261,7 @@ namespace Ultimud
                 Area area = new Area("Default Area");
                 area.AreaFlags.Set((int)Area.AreaFlag.StartingArea, true);
                 server.mainArea_ = area;
-                server.Init(null, null);
+                server.Init(null, serverpath ?? server.ServerPath);
             }
 
             server.PostInit();
@@ -254,7 +293,10 @@ namespace Ultimud
                 try
                 {
                     this.mainSocket_ = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    this.mainSocket_.Bind(new IPEndPoint(IPAddress.Any, port));
+                    IPAddress ip = IPAddress.Any;
+                    if (!string.IsNullOrEmpty(listenAddress) && !IPAddress.TryParse(listenAddress, out ip))
+                        ip = IPAddress.Any;
+                    this.mainSocket_.Bind(new IPEndPoint(ip, port));
                     this.mainSocket_.Listen(4);
                 }
                 catch (Exception e)
@@ -268,19 +310,18 @@ namespace Ultimud
 
                 Thread gameLoopThread = new Thread(new ThreadStart(this.GameLoop));
                 gameLoopThread.Name = "Game Loop Thread";
+                gameLoopThread.IsBackground = true;
                 gameLoopThread.Start();
 
                 Thread connectionThread = new Thread(new ThreadStart(this.AcceptConnections));
                 connectionThread.Name = "Connection Thread";
+                connectionThread.IsBackground = true;
                 connectionThread.Start();
 
                 Thread dataThread = new Thread(new ThreadStart(this.ProcessData));
                 dataThread.Name = "Data Thread";
+                dataThread.IsBackground = true;
                 dataThread.Start();
-
-                Thread centralServerUpdateThread = new Thread(new ThreadStart(this.NotifyCentralServer));
-                centralServerUpdateThread.Name = "Central Server Update Thread";
-                centralServerUpdateThread.Start();
 
                 this.autoSaveTimer_ = new System.Timers.Timer(300000);
                 this.autoSaveTimer_.Elapsed += new System.Timers.ElapsedEventHandler(autoSaveTimer__Elapsed);
@@ -296,11 +337,14 @@ namespace Ultimud
         public void Stop()
         {
             Trace.WriteLine("Stopping.", "SERVER");
+            this.running_ = false;
+            if (this.autoSaveTimer_ != null)
+                this.autoSaveTimer_.Stop();
             this.Broadcast("Stopping server.");
             this.CloseSockets();
             this.UnloadUsers();
-            this.clock_.Stop();
-            this.running_ = false;
+            if (this.clock_ != null)
+                this.clock_.Stop();
             if (this.Stopped != null) this.Stopped();
         }
 
@@ -317,33 +361,42 @@ namespace Ultimud
             {
                 lock (this)
                 {
-                    //Trace.WriteLine("Saving...", "SERVER");
-                    string path = MainForm.Instance.ServerPath;
+                    string path = this.ServerPath;
                     Directory.CreateDirectory(path);
+                    string gameFile = path + "\\" + String.ReplaceChars(this.Settings.Name, "/\\:*?\"<>|", '_') + ".mud";
+                    if (StoredSettings.Instance != null)
+                        StoredSettings.Instance.GameFile = gameFile;
                     try
                     {
-                        Damdai.Serialization.Binary.Serialize(this, StoredSettings.Instance.GameFile + ".new");
-                        if (File.Exists(StoredSettings.Instance.GameFile))
-                            File.Move(StoredSettings.Instance.GameFile, StoredSettings.Instance.GameFile + ".old");
-                        File.Move(StoredSettings.Instance.GameFile + ".new", StoredSettings.Instance.GameFile);
+                        if (File.Exists(gameFile + ".new"))
+                            File.Delete(gameFile + ".new");
+                        if (File.Exists(gameFile + ".old"))
+                            File.Delete(gameFile + ".old");
+                        Damdai.Serialization.Binary.Serialize(this, gameFile + ".new");
+                        if (File.Exists(gameFile))
+                            File.Move(gameFile, gameFile + ".old");
+                        File.Move(gameFile + ".new", gameFile);
                     }
                     catch (Exception e)
                     {
-                        Debug.WriteLine(e.ToString(), "ERROR");
-                        MessageBox.Show("Failed to save server.\r\nContact damdai@hotmail.com.",
-                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        File.Delete(StoredSettings.Instance.GameFile + ".new");
+                        Trace.WriteLine(e.ToString(), "ERROR");
+                        if (MainForm.Instance != null)
+                            MessageBox.Show("Failed to save server.\r\n" + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if (File.Exists(gameFile + ".new"))
+                            File.Delete(gameFile + ".new");
                     }
 
-                    if (File.Exists(StoredSettings.Instance.GameFile + ".old"))
-                        File.Delete(StoredSettings.Instance.GameFile + ".old");
+                    if (File.Exists(gameFile + ".old"))
+                        File.Delete(gameFile + ".old");
 
                     this.SaveDataSets(path);
                 }
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Trace.WriteLine(e.ToString(), "ERROR");
+                if (MainForm.Instance != null)
+                    MessageBox.Show(e.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -370,7 +423,7 @@ namespace Ultimud
                 catch (Exception e)
                 {
                     Debug.WriteLine(e.ToString(), "ERROR");
-                    MessageBox.Show("Failed to save " + dataset.Key.Name + " objects.\r\nContact damdai@hotmail.com.",
+                    if (MainForm.Instance != null) MessageBox.Show("Failed to save " + dataset.Key.Name + " objects.\r\nContact damdai@hotmail.com.",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -400,7 +453,7 @@ namespace Ultimud
                 catch (Exception e)
                 {
                     Trace.WriteLine(e.ToString(), "ERROR");
-                    MessageBox.Show("Failed to load " + type.Name + " dataset.\r\nContact damdai@hotmail.com.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    if (MainForm.Instance != null) MessageBox.Show("Failed to load " + type.Name + " dataset.\r\nContact damdai@hotmail.com.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -433,7 +486,7 @@ namespace Ultimud
             user.Send(this.Settings.TitleScreen + "\r\n{color:reset}UltiMUD v" + this.GetType().Assembly.GetName().Version.ToString() + " (c) DAMDAI (www.ultimud.com)");
 
             this.Add(user);
-            this.UserConnected(user);
+            if (this.UserConnected != null) this.UserConnected(user);
             this.GetName(user);
             this.FlushOutput();
         }
@@ -470,7 +523,8 @@ namespace Ultimud
             {
                 try
                 {
-                    this.UpdateObjects();
+                    if (!this.paused_)
+                        this.UpdateObjects();
                     this.UpdateUsers();
                     Thread.Sleep(500);
                 }
@@ -486,18 +540,22 @@ namespace Ultimud
         void HandleInput(object o)
         {
             User user = o as User;
+            if (user == null)
+                return;
             try
             {
                 if (!this.ReadFromSocket(user))
                     return;
 
-                lock (user.Input)
+                bool processedAny = false;
+                lock (user.InputLock)
                 {
                     while (true)
                     {
                         int newline = user.Input.IndexOfAny("\n\r".ToCharArray());
                         if (newline > -1)
                         {
+                            processedAny = true;
                             user.ProcessingInput = true;
                             user.Command = user.Input.Substring(0, newline);
 
@@ -505,12 +563,19 @@ namespace Ultimud
                                 user.InputReceived(user, user.Command);
 
                             if (user.Command.Trim() == "!")
-                                user.Command = user.LastCommand;
+                                user.Command = user.LastCommand ?? string.Empty;
                             else
                                 user.LastCommand = user.Command;
 
-                            //Debug.WriteLine((user.Character != null ? user.Character.Name : "User") + " input: " + user.Command);
-                            user.Input = user.Input.Remove(0, newline).TrimStart("\r\n ".ToCharArray());
+                            int removeCount = newline + 1;
+                            if (removeCount < user.Input.Length)
+                            {
+                                char c1 = user.Input[newline];
+                                char c2 = user.Input[removeCount];
+                                if ((c1 == '\r' && c2 == '\n') || (c1 == '\n' && c2 == '\r'))
+                                    removeCount++;
+                            }
+                            user.Input = user.Input.Remove(0, removeCount).TrimStart(' ');
 
                             try
                             {
@@ -526,6 +591,11 @@ namespace Ultimud
                                         if (user.CurrentInputHandler != null && user.CurrentInputHandler(user))
                                             user.FinishInput();
                                     }
+                                }
+                                else if (user.CurrentMenu != null && user.CurrentMenu.Options == null && user.CurrentMenu.InputHandler != null)
+                                {
+                                    if (user.CurrentMenu.ProcessCommand(user))
+                                        user.FinishInput();
                                 }
 
                                 if (user.CurrentMenu != null)
@@ -557,7 +627,8 @@ namespace Ultimud
                         }
                     }
                 }
-                user.LastActivity = DateTime.Now;
+                if (processedAny)
+                    user.LastActivity = DateTime.Now;
             }
             catch (Exception e)
             {
@@ -573,6 +644,59 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         bool ReadFromSocket(User user)
+        {
+            if (user == null || user.Socket == null)
+                return false;
+
+            byte[] buf = new byte[2048];
+            int read = 0;
+            try
+            {
+                lock (user.Socket)
+                    read = user.Socket.Receive(buf);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Error reading from socket, disconnecting user...", "ERROR");
+                Debug.WriteLine(e.ToString());
+                this.Disconnect(user);
+                return false;
+            }
+
+            if (read <= 0)
+            {
+                Debug.WriteLine(read + " bytes read, disconnecting user...", "SERVER");
+                this.Disconnect(user);
+                return false;
+            }
+            else if (read > 1024)
+            {
+                Trace.WriteLine("Input overflow: " + read + " bytes read, disconnecting user...", "WARNING");
+                user.SendError("Input overflow. Disconnecting...");
+                this.Disconnect(user);
+                return false;
+            }
+
+            int cleanLen = 0;
+            byte[] cleanBuf = Telnet.StripTelnetNegotiation(buf, read, out cleanLen);
+            if (cleanLen <= 0)
+                return false;
+
+            string decoded = System.Text.Encoding.UTF8.GetString(cleanBuf, 0, cleanLen);
+            lock (user.InputLock)
+            {
+                user.Input += decoded;
+                user.Input = String.FixString(user.Input);
+            }
+
+            if (user.ProcessingInput)
+                return false;
+
+            return true;
+        }
+
+        [Obfuscation(Exclude = false)]
+        bool ReadFromSocketLegacyUnused(User user)
         {
             byte[] buf = new byte[2048];
             int read = 0;
@@ -746,6 +870,47 @@ namespace Ultimud
                 }
 
                 if (!user.Flags.Get((int)User.UserFlags.LoggedIn))
+                {
+                    this.Unload(user, false);
+                }
+                else if (user.Character != null)
+                {
+                    this.Settings.InfoChannel.Broadcast(InfoChannel.Event.Logout, user.Character.Name + " has disconnected.");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.ToString(), "ERROR");
+            }
+            finally
+            {
+                if (user.Socket != null)
+                {
+                    try { user.Socket.Close(); } catch { }
+                    user.Socket = null;
+                }
+                if (this.UserDisconnected != null)
+                    this.UserDisconnected(user);
+            }
+        }
+
+        public void DisconnectLegacyUnused(User user)
+        {
+            try
+            {
+                Trace.WriteLine((user.Character != null ? user.Character.Name : user.IpAddress) + " has disconnected.", "SERVER");
+                user.FlushAllOutput();
+                if (user.Character != null && user.Character.Area != null)
+                {
+                    String str = new String(null, null, null, null, "{1} suddenly gets a blank look on {1:sex(it's,his,her)} face.", null);
+                    user.Character.Area.Send(str, user.Character, null, 0);
+                    this.FlushOutput();
+                }
+
+                if (!user.Flags.Get((int)User.UserFlags.LoggedIn))
+                    this.Unload(user, false);
+                else if (user.Character != null)
+                    this.Settings.InfoChannel.Broadcast(InfoChannel.Event.Logout, user.Character.Name + " has disconnected.");
                     this.Unload(user, false);
             }
             catch (Exception e)
@@ -759,7 +924,8 @@ namespace Ultimud
                     user.Socket.Close();
                     user.Socket = null;
                 }
-                this.UserDisconnected(user);
+                if (this.UserDisconnected != null)
+                    this.UserDisconnected(user);
             }
         }
 
@@ -1088,7 +1254,9 @@ namespace Ultimud
                 return true;
 
             //TEMP
-            if (this.Users.Count >= 10)
+#pragma warning disable 0429
+            if (false && this.Users.Count >= 10)
+#pragma warning restore 0429
             {
                 user.Send("While in beta testing phase, this server will only allow 10 simultaneous connections.\r\nThis server is currently full.");
                 this.Disconnect(user);
@@ -1099,7 +1267,7 @@ namespace Ultimud
             user.Character = new Player();
             user.Character.Name = name;
 
-            string filename = MainForm.Instance.ServerPath + "\\Players\\" + user.Character.Name;
+            string filename = this.ServerPath + "\\Players\\" + user.Character.Name;
             if (!File.Exists(filename))
             {
                 if (this.Settings.Flags.Get((int)Settings.Flag.Newlocked))
@@ -1142,9 +1310,9 @@ namespace Ultimud
                     {
                         user.Init(u);
                         this.Remove(u);
-                        this.UserUnloaded(u);
+                        if (this.UserUnloaded != null) this.UserUnloaded(u);
                         user.Send("Reconnecting...");
-                        this.UserReconnected(user);
+                        if (this.UserReconnected != null) this.UserReconnected(user);
                         this.GetPassword(user);
                     }
                     else
@@ -1162,6 +1330,32 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         bool GetPassword(User user)
+        {
+            if (user.Command == string.Empty)
+            {
+                Telnet.SetEcho(user, false);
+                user.Menus.Enqueue(new Menu(new InputHandler(this.GetPassword), "Password: "));
+                return false;
+            }
+
+            Telnet.SetEcho(user, true);
+            string password = user.Command;
+            user.Command = null;
+            if (!user.VerifyPassword(password))
+            {
+                user.Send("Incorrect password.");
+                this.GetPassword(user);
+            }
+            else
+            {
+                this.Login(user);
+            }
+
+            return true;
+        }
+
+        [Obfuscation(Exclude = false)]
+        bool GetPasswordLegacyUnused(User user)
         {
             if (user.Command == string.Empty)
             {
@@ -1197,6 +1391,36 @@ namespace Ultimud
             string command = user.Command.ToLower();
             user.Command = null;
             if ("yes".StartsWith(command, StringComparison.CurrentCultureIgnoreCase))
+            {
+                this.GetNewPassword(user);
+            }
+            else if ("no".StartsWith(command, StringComparison.CurrentCultureIgnoreCase))
+            {
+                user.Character.Name = null;
+                this.GetName(user);
+            }
+            else
+            {
+                user.Send("Please enter Yes or No.");
+                return this.QueryCreateUser(user);
+            }
+
+            return true;
+        }
+
+        [Obfuscation(Exclude = false)]
+        bool QueryCreateUserLegacyUnused(User user)
+        {
+            if (string.IsNullOrEmpty(user.Command))
+            {
+                user.Menus.Enqueue(new Menu(new InputHandler(this.QueryCreateUser),
+                    "User not found. Create new user " + user.Character.Name + "? "));
+                return false;
+            }
+
+            string command = user.Command.ToLower();
+            user.Command = null;
+            if ("yes".StartsWith(command, StringComparison.CurrentCultureIgnoreCase))
                 this.GetNewPassword(user);
             else// if ("no".StartsWith(command))
             {
@@ -1209,6 +1433,29 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         bool GetNewPassword(User user)
+        {
+            if (user.Command == string.Empty)
+            {
+                Telnet.SetEcho(user, false);
+                user.Menus.Enqueue(new Menu(new InputHandler(this.GetNewPassword), "New password: "));
+                return false;
+            }
+
+            Telnet.SetEcho(user, true);
+            string password = user.Command;
+            user.Command = null;
+            if (password.Length < 4)
+            {
+                user.SendError("Password must be at least 4 characters long.");
+                return this.GetNewPassword(user);
+            }
+            user.SetPassword(password);
+            this.ConfirmPassword(user);
+            return true;
+        }
+
+        [Obfuscation(Exclude = false)]
+        bool GetNewPasswordLegacyUnused(User user)
         {
             if (user.Command == string.Empty)
             {
@@ -1226,6 +1473,32 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         bool ConfirmPassword(User user)
+        {
+            if (user.Command == string.Empty)
+            {
+                Telnet.SetEcho(user, false);
+                user.Menus.Enqueue(new Menu(new InputHandler(this.ConfirmPassword), "Confirm password: "));
+                return false;
+            }
+
+            Telnet.SetEcho(user, true);
+            string password = user.Command;
+            user.Command = null;
+            if (!user.VerifyPassword(password))
+            {
+                user.Send("Passwords don't match.");
+                this.GetNewPassword(user);
+            }
+            else
+            {
+                this.GetSex(user);
+            }
+
+            return true;
+        }
+
+        [Obfuscation(Exclude = false)]
+        bool ConfirmPasswordLegacyUnused(User user)
         {
             if (user.Command == string.Empty)
             {

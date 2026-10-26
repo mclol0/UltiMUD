@@ -49,7 +49,10 @@ namespace Ultimud
                 this.rect_ = value;
                 if (this.image_ != null)
                 {
-                    //this.modifiedImage_ = Damdai.Image.ResizeImage(this.image_, rect_.Size);
+                    if (this.rect_.Width > 0 && this.rect_.Height > 0)
+                        this.modifiedImage_ = Damdai.Util.ResizeImage(new Bitmap(this.image_), new Size(this.rect_.Width, this.rect_.Height));
+                    else
+                        this.modifiedImage_ = this.image_;
                 }
             }
         }
@@ -72,8 +75,14 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         internal void OnDeserialized(StreamingContext context)
         {
-            //if (this.image_ != null)
-            //    this.modifiedImage_ = Damdai.Image.ResizeImage(this.image_, this.Rect.Size);
+            this.visible_ = true;
+            if (this.image_ != null)
+            {
+                if (this.rect_.Width > 0 && this.rect_.Height > 0)
+                    this.modifiedImage_ = Damdai.Util.ResizeImage(new Bitmap(this.image_), new Size(this.rect_.Width, this.rect_.Height));
+                else
+                    this.modifiedImage_ = this.image_;
+            }
         }
     }
 }

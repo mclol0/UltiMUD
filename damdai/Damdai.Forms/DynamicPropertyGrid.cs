@@ -71,6 +71,7 @@ namespace Damdai.Forms
         List<Attribute> hiddenlist_ = new List<Attribute>();
         List<Attribute> readonlylist_ = new List<Attribute>();
         bool readonly_;
+        static readonly System.Drawing.Bitmap bitmap_ = new System.Drawing.Bitmap(16, 16);
 
         public bool ReadOnly
         {
@@ -156,7 +157,7 @@ namespace Damdai.Forms
         {
             get
             {
-                return new System.Drawing.Bitmap(16, 16);
+                return bitmap_;
             }
         }
     }

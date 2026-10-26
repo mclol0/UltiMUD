@@ -190,9 +190,15 @@ namespace Damdai.Collections
         /// Object.Equals() override.
         /// </summary>
         /// <returns>true if object is equal to this, otherwise false.</returns>
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public override bool Equals(object o)
         {
-            Heap<T> heap = (Heap<T>)o;
+            Heap<T> heap = o as Heap<T>;
+            if (heap == null) return false;
             if (heap.Count != this.Count)
                 return false;
             for (int i = 0; i < this.Count; i++)

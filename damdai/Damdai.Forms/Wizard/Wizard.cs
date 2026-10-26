@@ -501,12 +501,14 @@ namespace Damdai.Forms
 					(this.pnlButtons.Top-textSize.Height)/2,
 					textSize.Width, textSize.Height);
 		
-				Pen dashPen = (Pen) SystemPens.GrayText.Clone();
+				using (Pen dashPen = (Pen) SystemPens.GrayText.Clone())
+				{
 				dashPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
 
 				e.Graphics.DrawRectangle(dashPen,
 					this.Left+8, this.Top+8, 
 					this.Width-17, this.pnlButtons.Top-17);
+				}
 
                 using (SolidBrush brush = new SolidBrush(SystemColors.GrayText))
                     e.Graphics.DrawString(noPagesText, this.Font, brush, layout);

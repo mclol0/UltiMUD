@@ -46,7 +46,10 @@ namespace Damdai.Forms
             if (isMouseOver)
             {
                 Color fill = renderer.ColorTable.ButtonSelectedHighlight; //Color.FromArgb(35, SystemColors.Highlight);
-                g.FillRectangle(new SolidBrush(fill), glyphRect);
+                using (SolidBrush brush = new SolidBrush(fill))
+                {
+                    g.FillRectangle(brush, glyphRect);
+                }
                 Rectangle borderRect = glyphRect;
 
                 borderRect.Width--;

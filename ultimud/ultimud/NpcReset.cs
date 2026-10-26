@@ -27,11 +27,16 @@ namespace Ultimud
             OnUpdate
         }
 
+#pragma warning disable 0169, 0414
         List<Guid> teachableAbilities_; //Deprecated.
+#pragma warning restore 0169, 0414
         Area.Region boundary_;
+#pragma warning disable 0169, 0414
         TeachTriggers teachTrigger_; //Deprecated.
+#pragma warning restore 0169, 0414
         int count_ = 1;
         List<Guid> items_;
+#pragma warning disable 0169, 0414
         BitArray npcFlags_; //Deprecated.
         List<TextTrigger> textTriggers_; //Deprecated.
         int teachChance_; //Deprecated.
@@ -39,6 +44,7 @@ namespace Ultimud
         Dictionary<ScriptType, string> scripts_; //Deprecated.
         Character.Positions startpos_; //Deprecated.
         Dictionary<ScriptType, Guid> scripts2_; //Deprecated.
+#pragma warning restore 0169, 0414
 
         #region Properties
         [DisplayName("Npc")]

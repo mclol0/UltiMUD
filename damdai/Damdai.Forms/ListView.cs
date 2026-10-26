@@ -76,11 +76,13 @@ namespace Damdai.Forms
 		/// <summary>
 		/// MessageHeader for WM_NOTIFY
 		/// </summary>
+#pragma warning disable 0649
 		private struct NMHDR 
 		{ 
 			public IntPtr hwndFrom; 
 			public Int32  idFrom; 
 			public Int32  code; 
+#pragma warning restore 0649
 		}
 
 		[DllImport("user32.dll")]
@@ -347,6 +349,9 @@ namespace Damdai.Forms
 		/// <param name="SubItem">SubItem index to edit</param>
 		public void StartEditing(Control c, ListViewItem Item, int SubItem)
 		{
+			if (_editingControl != null)
+				EndEditing(false);
+
 			OnSubItemBeginEditing(new SubItemEventArgs(Item, SubItem));
 
 			Rectangle rcSubItem = GetSubItemBounds(Item, SubItem);

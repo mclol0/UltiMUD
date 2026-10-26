@@ -246,13 +246,6 @@ namespace Ultimud
             this.Mode = EditModes.Pan;
         }
 
-        public new void Dispose()
-        {
-            foreach (Cursor c in this.cursors_.Values)
-                c.Dispose();
-            base.Dispose();
-        }
-
         void redrawtimer__Tick(object sender, EventArgs e)
         {
             this.Invalidate();
@@ -370,11 +363,22 @@ namespace Ultimud
         }
         SortedDictionary<int, List<Object>> DrawObjects(Graphics g)//, Rectangle clipRectangle)
         {
-            List<Object> children = new List<Object>(this.Area.GetChildren<Object>(this.Center, System.Math.Max(this.ViewPort.Width, this.ViewPort.Height)));
+            Object[] children;
+            try
+            {
+                lock (this.area_.Children)
+                {
+                    children = this.area_.Children.ToArray();
+                }
+            }
+            catch (Exception)
+            {
+                return new SortedDictionary<int, List<Object>>();
+            }
             SortedDictionary<int, List<Object>> objects = new SortedDictionary<int, List<Object>>();
             foreach (Object child in children)
             {
-                if (this.Contains(child) && child != this.SelectedObject)// && child.Intersects(clipRectangle))
+                if (child != null && this.Contains(child) && child != this.SelectedObject)// && child.Intersects(clipRectangle))
                 {
                     if (child is Area.Layer)
                     {
@@ -433,9 +437,21 @@ namespace Ultimud
 
             using (Pen pen = new Pen(Color.Magenta, 1))
             {
-                foreach (Reset reset in this.Area.Resets)
+                Reset[] resets;
+                try
                 {
-                    if (viewPort.Contains(reset.Location.Point))
+                    lock (this.Area.Resets)
+                    {
+                        resets = this.Area.Resets.ToArray();
+                    }
+                }
+                catch (Exception)
+                {
+                    resets = new Reset[0];
+                }
+                foreach (Reset reset in resets)
+                {
+                    if (reset != null && viewPort.Contains(reset.Location.Point))
                     {
                         g.DrawEllipse(
                             pen,
@@ -489,11 +505,16 @@ namespace Ultimud
                 int ypos = (o.Location.Point.Y - this.Offset.Y) * this.Zoom;
                 Rectangle rect = new Rectangle(xpos, ypos, this.zoom_, this.zoom_);
                 rect.Inflate(rect.Width, rect.Height);
-                System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
-                gp.AddEllipse(rect);
-                gp.AddRectangle(new Rectangle(0, 0, this.Width, this.Height));
-                Region r = new Region(gp);
-                g.FillRegion(new SolidBrush(Color.FromArgb(125, Color.Black)), r);
+                using (System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    gp.AddEllipse(rect);
+                    gp.AddRectangle(new Rectangle(0, 0, this.Width, this.Height));
+                    using (Region r = new Region(gp))
+                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(125, Color.Black)))
+                    {
+                        g.FillRegion(brush, r);
+                    }
+                }
                 using (Pen p = new Pen(Color.White, 1))
                     g.DrawEllipse(p, rect);
             }

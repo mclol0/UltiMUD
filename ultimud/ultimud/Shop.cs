@@ -16,7 +16,9 @@ namespace Ultimud
         List<Item> stock_ = new List<Item>();
         int markup_ = 25;
         int markdown_ = 25;
+#pragma warning disable 0169, 0414
         List<string> itemtypes_; //Deprecated.
+#pragma warning restore 0169, 0414
         List<Guid> itemtags_ = new List<Guid>();
 
         #region Properties
@@ -131,7 +133,7 @@ namespace Ultimud
                         this.stock_.Remove(item);
                     //}
 
-                    String str = new String("You buy {2} for $" + price + ".", null, null, null, "{1} buys {2}.", null);
+                    String str = new String("You buy {2} for $" + price + ".", "You buy {2} for $" + price + ".", null, null, "{1} buys {2}.", null);
                     ch.Area.Send(str, ch, item, 0);
                 }
             }
@@ -142,7 +144,7 @@ namespace Ultimud
         }
         public void Buy(Item item, Character ch)
         {
-            if (!item.Tags.Exists(delegate(Guid id)
+            if (this.ItemTags != null && this.ItemTags.Count > 0 && !item.Tags.Exists(delegate(Guid id)
             {
                 return this.ItemTags.Contains(id);
             }))
@@ -174,7 +176,7 @@ namespace Ultimud
                 if (!this.Items.Contains(item.BlueprintId))
                     this.stock_.Add(item);
 
-                String str = new String("You sell {2} for $" + price + ".", null, null, null, "{1} sells {2}.", null);
+                String str = new String("You sell {2} for $" + price + ".", "You sell {2} for $" + price + ".", null, null, "{1} sells {2}.", null);
                 ch.Area.Send(str, ch, item, 0);
             }
             else
@@ -218,7 +220,7 @@ namespace Ultimud
         }
         public int BuyPrice(Item item)
         {
-            return (int)(item.Value / (float)(1 + ((float)this.MarkUp / 100)));
+            return Math.Max(0, (int)(item.Value * (1.0f - ((float)this.MarkDown / 100.0f))));
         }
 
         [Obfuscation(Exclude = false)]

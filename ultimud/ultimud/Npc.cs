@@ -51,6 +51,10 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         [NonSerialized]
         Lua lua_ = new Lua();
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        Queue<KeyValuePair<TextTrigger, IObject>> queuedTriggers_;
         #endregion
 
         #region Properties
@@ -256,6 +260,11 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public override void Update()
         {
+            if (this.CurrentAction == null && this.queuedTriggers_ != null && this.queuedTriggers_.Count > 0)
+            {
+                KeyValuePair<TextTrigger, IObject> kvp = this.queuedTriggers_.Dequeue();
+                this.ExecuteTrigger(kvp.Key, kvp.Value);
+            }
             if (this.FightSystem != null) this.FightSystem.Update(this);
             else if (!this.updateTimer_.Update() && this.Area != null && this.Position != Positions.Dead && this.Master == null)
             {
@@ -359,7 +368,7 @@ namespace Ultimud
             if (this.FightSystem == null && this.NpcFlags.Get((int)Flags.Aggressive) && Regex.IsMatch(str, @"^[\w ]+ arrives"))
             {
                 Ability ability = this.GetRandomAggressiveAbility(actor);
-                if (ability != null)
+                if (ability != null && actor != null)
                     this.ReplaceCurrentAction(new CommandAction(ability.Name + " " + actor.Name, 2, this));
             }
 
@@ -373,7 +382,13 @@ namespace Ultimud
                         {
                             switch (trigger.BusyAction)
                             {
-                                case TextTrigger.BusyActions.Ignore: continue;
+                                case TextTrigger.BusyActions.Ignore:
+                                    continue;
+                                case TextTrigger.BusyActions.Enqueue:
+                                    if (this.queuedTriggers_ == null)
+                                        this.queuedTriggers_ = new Queue<KeyValuePair<TextTrigger, IObject>>();
+                                    this.queuedTriggers_.Enqueue(new KeyValuePair<TextTrigger, IObject>(trigger, actor));
+                                    return;
                                 case TextTrigger.BusyActions.Interrupt: 
                                     this.Stop(false);
                                     this.Actions.Clear();
@@ -381,24 +396,30 @@ namespace Ultimud
                             }
                         }
 
-                        try
-                        {
-                            string strscript = string.Empty;
-                            this.lua_["npc"] = this;
-                            if (actor == null) strscript += "actor=nil\r\n";
-                            else this.lua_["actor"] = actor;
-                            this.lua_.DoString(strscript + trigger.Response.Replace("{1}", this.Name).Replace("{2}", actor.Name));
-                        }
-                        catch (Exception e)
-                        {
-                            Trace.WriteLine(e.Message, "ERROR: Npc: TextTrigger");
-                            Debug.WriteLine(trigger.Response, "Script");
-                            Debug.WriteLine(e.ToString(), "StackTrace");
-                        }
-
+                        this.ExecuteTrigger(trigger, actor);
                         return;
                     }
                 }
+            }
+        }
+
+        [Obfuscation(Exclude = false)]
+        void ExecuteTrigger(TextTrigger trigger, IObject actor)
+        {
+            try
+            {
+                string strscript = string.Empty;
+                this.lua_["npc"] = this;
+                if (actor == null) strscript += "actor=nil\r\n";
+                else this.lua_["actor"] = actor;
+                string actorName = (actor != null ? actor.Name : "someone");
+                this.lua_.DoString(strscript + trigger.Response.Replace("{1}", this.Name).Replace("{2}", actorName));
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.Message, "ERROR: Npc: TextTrigger");
+                Debug.WriteLine(trigger.Response, "Script");
+                Debug.WriteLine(e.ToString(), "StackTrace");
             }
         }
         

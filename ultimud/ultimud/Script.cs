@@ -49,6 +49,7 @@ namespace Ultimud
         public Types ScriptType
         {
             get { return this.type_; }
+            set { this.type_ = value; }
         }
         #endregion
 
@@ -77,11 +78,17 @@ namespace Ultimud
         {
             protected ListBox listbox_ = new ListBox();
             protected Script.Types scripttype_;
+            IWindowsFormsEditorService service_;
 
             public ScriptSelector()
             {
                 this.listbox_.BorderStyle = BorderStyle.None;
                 this.listbox_.Sorted = true;
+                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e)
+                {
+                    if (this.service_ != null)
+                        this.service_.CloseDropDown();
+                };
             }
             public override bool IsDropDownResizable
             {
@@ -100,14 +107,20 @@ namespace Ultimud
                 this.listbox_.Items.Clear();
                 this.listbox_.Items.Add(" <None>");
                 this.listbox_.Items.Add(" <New>");
-                this.listbox_.Items.Add(" <Edit>");
+                if (scriptid != Guid.Empty && Server.Instance.Get<Script>(scriptid) != null)
+                    this.listbox_.Items.Add(" <Edit>");
                 foreach (Script s in Server.Instance.DataSets[typeof(Script)].Values)
+                {
                     if (s.type_ == this.scripttype_)
+                    {
                         this.listbox_.Items.Add(s);
+                        if (s.Id == scriptid)
+                            this.listbox_.SelectedItem = s;
+                    }
+                }
 
-                IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-                this.listbox_.MouseClick += delegate(object sender, MouseEventArgs e) { service.CloseDropDown(); };
-                service.DropDownControl(this.listbox_);
+                this.service_ = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+                this.service_.DropDownControl(this.listbox_);
                 object selecteditem = this.listbox_.SelectedItem;
                 if (selecteditem != null)
                 {
@@ -125,15 +138,18 @@ namespace Ultimud
                             Server.Instance.Add<Script>(script);
                             return script.Id;
                         }
-                        else return Guid.Empty;
+                        else return scriptid;
                     }
                     else if (selecteditem.ToString() == " <Edit>")
                     {
-                        PropertyGrid propgrid = new PropertyGrid();
                         Script script = Server.Instance.Get<Script>(scriptid);
-                        propgrid.SelectedObject = script;
-                        Damdai.Forms.Dialog dialog = new Damdai.Forms.Dialog(propgrid, "Edit Script");
-                        dialog.ShowDialog();
+                        if (script != null)
+                        {
+                            PropertyGrid propgrid = new PropertyGrid();
+                            propgrid.SelectedObject = script;
+                            Damdai.Forms.Dialog dialog = new Damdai.Forms.Dialog(propgrid, "Edit Script");
+                            dialog.ShowDialog();
+                        }
                         return scriptid;
                     }
                     else return Guid.Empty;

@@ -55,7 +55,7 @@ namespace Ultimud
         string defaultPrompt_ = "return user.Character.Name .. ' ({color:gray}' .. user.Character.Position:ToString() .. '{color:reset})> '";
         int inventoryLimit_;
         string motd_;
-        Guid speedStat_; //Deprecated.
+        Guid speedStat_;
         int mapSize_ = 11;
         string name_ = "Unnamed";
         string description_;
@@ -64,12 +64,12 @@ namespace Ultimud
         DeathSettings deathSettings_ = new DeathSettings();
         LookFormat lookFormat_ = new LookFormat();
         bool numberCommas_ = false;
-        WhoFormat whoFormat_ = new WhoFormat(); //Deprecated.
+        WhoFormat whoFormat_ = new WhoFormat();
         InfoChannel infoChannel_ = new InfoChannel();
-        AbilitiesFormat abilitiesFormat_ = new AbilitiesFormat(); //Deprecated.
-        StatsFormat statsFormat_ = new StatsFormat(); //Deprecated.
-        bool simplemovement_; //Deprecated.
-        EqFormat eqformat_ = new EqFormat(); //Deprecated.
+        AbilitiesFormat abilitiesFormat_ = new AbilitiesFormat();
+        StatsFormat statsFormat_ = new StatsFormat();
+        bool simplemovement_;
+        EqFormat eqformat_ = new EqFormat();
         string selectracehelp_ = "Your race affects your initial stats and location, as well as what abilities and items you can use.";
         string selectraceprompt_ = "Select your race: ";
         string selectjobhelp_ = "Your job affects your initial stats and location, as well as what abilities and items you can use.";
@@ -131,14 +131,24 @@ namespace Ultimud
             set { this.motd_ = value; }
         }
 
-        //[Description("The stat that determines an object's maximum speed.")]
-        //[Editor(typeof(StatSelector), typeof(UITypeEditor))]
-        //[TypeConverter(typeof(Stat.IdToNameConverter))]
-        //public Guid SpeedStat
-        //{
-        //    get { return this.speedStat_; }
-        //    set { this.speedStat_ = value; }
-        //}
+        [Category("Movement")]
+        [Description("The stat that determines an object's maximum speed.")]
+        [Editor(typeof(StatSelector), typeof(UITypeEditor))]
+        [TypeConverter(typeof(Stat.IdToNameConverter))]
+        public Guid SpeedStat
+        {
+            get { return this.speedStat_; }
+            set { this.speedStat_ = value; }
+        }
+
+        [Category("Movement")]
+        [Description("When true, movement commands move one step immediately instead of starting continuous travel.")]
+        [DefaultValue(false)]
+        public bool SimpleMovement
+        {
+            get { return this.simplemovement_; }
+            set { this.simplemovement_ = value; }
+        }
 
         [Category("Appearance")]
         [Description("The size of the in-game map that players see when using the LOOK command.")]
@@ -202,6 +212,34 @@ namespace Ultimud
         {
             get { return this.lookFormat_; }
             set { this.lookFormat_ = value; }
+        }
+
+        [Category("Appearance")]
+        public WhoFormat WhoFormat
+        {
+            get { return this.whoFormat_; }
+            set { this.whoFormat_ = value; }
+        }
+
+        [Category("Appearance")]
+        public StatsFormat StatsFormat
+        {
+            get { return this.statsFormat_; }
+            set { this.statsFormat_ = value; }
+        }
+
+        [Category("Appearance")]
+        public EqFormat EqFormat
+        {
+            get { return this.eqformat_; }
+            set { this.eqformat_ = value; }
+        }
+
+        [Category("Appearance")]
+        public AbilitiesFormat AbilitiesFormat
+        {
+            get { return this.abilitiesFormat_; }
+            set { this.abilitiesFormat_ = value; }
         }
 
         [Category("Appearance")]
@@ -270,33 +308,46 @@ namespace Ultimud
         #region Methods
         public Settings()
         {
-            this.Colors.Add(Text.AbilityPrepare1, Telnet.Color.BrightBlue);
-            this.Colors.Add(Text.AbilityPerform2, Telnet.Color.Green);
-            this.Colors.Add(Text.AbilityPerform3, Telnet.Color.Reset);
-            this.Colors.Add(Text.AbilitySuccess1, Telnet.Color.BrightMagenta);
-            this.Colors.Add(Text.AbilitySuccess2, Telnet.Color.BrightRed);
-            this.Colors.Add(Text.AbilitySuccess3, Telnet.Color.Reset);
-            this.Colors.Add(Text.AbilityMiss1, Telnet.Color.Gray);
-            this.Colors.Add(Text.AbilityMiss2, Telnet.Color.Gray);
-            this.Colors.Add(Text.AbilityMiss3, Telnet.Color.Reset);
-            this.Colors.Add(Text.AbilityFail1, Telnet.Color.Gray);
-            this.Colors.Add(Text.AbilityFail2, Telnet.Color.Gray);
-            this.Colors.Add(Text.AbilityFail3, Telnet.Color.Reset);
-            this.Colors.Add(Text.AbilityImprovements, Telnet.Color.BrightGreen);
-            this.Colors.Add(Text.StatIncrease, Telnet.Color.BrightGreen);
-            this.Colors.Add(Text.StatDecrease, Telnet.Color.BrightRed);
-            this.Colors.Add(Text.Help, Telnet.Color.Cyan);
-            this.Colors.Add(Text.Server, Telnet.Color.BrightRed);
-            this.Colors.Add(Text.MapColorPlayer, Telnet.Color.BrightRed);
-            this.Colors.Add(Text.MapColorSelf, Telnet.Color.BrightCyan);
+            this.EnsureColorsInitialized();
 
             foreach (int val in Enum.GetValues(typeof(Flag)))
                 this.Flags.Set(val, false);
         }
+
+        void EnsureColorsInitialized()
+        {
+            if (this.colors_ == null)
+                this.colors_ = new Dictionary<Text, Telnet.Color>();
+            else
+                this.colors_.OnDeserialization(null);
+
+            if (!this.Colors.ContainsKey(Text.AbilityPrepare1)) this.Colors.Add(Text.AbilityPrepare1, Telnet.Color.BrightBlue);
+            if (!this.Colors.ContainsKey(Text.AbilityPrepare2)) this.Colors.Add(Text.AbilityPrepare2, Telnet.Color.BrightBlue);
+            if (!this.Colors.ContainsKey(Text.AbilityPrepare3)) this.Colors.Add(Text.AbilityPrepare3, Telnet.Color.Reset);
+            if (!this.Colors.ContainsKey(Text.AbilityPerform1)) this.Colors.Add(Text.AbilityPerform1, Telnet.Color.Green);
+            if (!this.Colors.ContainsKey(Text.AbilityPerform2)) this.Colors.Add(Text.AbilityPerform2, Telnet.Color.Green);
+            if (!this.Colors.ContainsKey(Text.AbilityPerform3)) this.Colors.Add(Text.AbilityPerform3, Telnet.Color.Reset);
+            if (!this.Colors.ContainsKey(Text.AbilitySuccess1)) this.Colors.Add(Text.AbilitySuccess1, Telnet.Color.BrightMagenta);
+            if (!this.Colors.ContainsKey(Text.AbilitySuccess2)) this.Colors.Add(Text.AbilitySuccess2, Telnet.Color.BrightRed);
+            if (!this.Colors.ContainsKey(Text.AbilitySuccess3)) this.Colors.Add(Text.AbilitySuccess3, Telnet.Color.Reset);
+            if (!this.Colors.ContainsKey(Text.AbilityMiss1)) this.Colors.Add(Text.AbilityMiss1, Telnet.Color.Gray);
+            if (!this.Colors.ContainsKey(Text.AbilityMiss2)) this.Colors.Add(Text.AbilityMiss2, Telnet.Color.Gray);
+            if (!this.Colors.ContainsKey(Text.AbilityMiss3)) this.Colors.Add(Text.AbilityMiss3, Telnet.Color.Reset);
+            if (!this.Colors.ContainsKey(Text.AbilityFail1)) this.Colors.Add(Text.AbilityFail1, Telnet.Color.Gray);
+            if (!this.Colors.ContainsKey(Text.AbilityFail2)) this.Colors.Add(Text.AbilityFail2, Telnet.Color.Gray);
+            if (!this.Colors.ContainsKey(Text.AbilityFail3)) this.Colors.Add(Text.AbilityFail3, Telnet.Color.Reset);
+            if (!this.Colors.ContainsKey(Text.AbilityImprovements)) this.Colors.Add(Text.AbilityImprovements, Telnet.Color.BrightGreen);
+            if (!this.Colors.ContainsKey(Text.StatIncrease)) this.Colors.Add(Text.StatIncrease, Telnet.Color.BrightGreen);
+            if (!this.Colors.ContainsKey(Text.StatDecrease)) this.Colors.Add(Text.StatDecrease, Telnet.Color.BrightRed);
+            if (!this.Colors.ContainsKey(Text.Help)) this.Colors.Add(Text.Help, Telnet.Color.Cyan);
+            if (!this.Colors.ContainsKey(Text.Server)) this.Colors.Add(Text.Server, Telnet.Color.BrightRed);
+            if (!this.Colors.ContainsKey(Text.MapColorPlayer)) this.Colors.Add(Text.MapColorPlayer, Telnet.Color.BrightRed);
+            if (!this.Colors.ContainsKey(Text.MapColorSelf)) this.Colors.Add(Text.MapColorSelf, Telnet.Color.BrightCyan);
+        }
         
         public string GetColorCode(Text t)
         {
-            if (this.Colors.ContainsKey(t))
+            if (this.Colors != null && this.Colors.ContainsKey(t))
                 return Telnet.GetColorCode((Telnet.Color)this.Colors[t]);
             else
                 return Telnet.ColorCode.Reset;
@@ -312,13 +363,17 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         internal void OnDeserialized(StreamingContext context)
         {
+            this.EnsureColorsInitialized();
             if (this.InfoChannel == null)
                 this.InfoChannel = new InfoChannel();
-            this.whoFormat_ = null;
-            this.abilitiesFormat_ = null;
-            this.statsFormat_ = null;
-            this.eqformat_ = null;
-            this.speedStat_ = default(Guid);
+            if (this.whoFormat_ == null)
+                this.whoFormat_ = new WhoFormat();
+            if (this.abilitiesFormat_ == null)
+                this.abilitiesFormat_ = new AbilitiesFormat();
+            if (this.statsFormat_ == null)
+                this.statsFormat_ = new StatsFormat();
+            if (this.eqformat_ == null)
+                this.eqformat_ = new EqFormat();
             if (string.IsNullOrEmpty(this.selectracehelp_))
                 selectracehelp_ = "Your race affects your initial stats and location, as well as what abilities and items you can use.";
             if (string.IsNullOrEmpty(this.selectraceprompt_))

@@ -26,16 +26,20 @@ namespace Ultimud
         Lua lua_ = new Lua();
 
         Guid statId_;
+#pragma warning disable 0169, 0414
         int amount_; //Deprecated.
         int random_; //Deprecated.
         List<StatFactor> offensiveFactors_ = new List<StatFactor>(); //Deprecated.
         List<StatFactor> defensiveFactors_ = new List<StatFactor>(); //Deprecated.
+#pragma warning restore 0169, 0414
         ApplyTarget applyTo_ = ApplyTarget.Current;
         int chance_ = 100;
         bool restore_;
         bool silent_;
         long mod_;
+#pragma warning disable 0169, 0414
         string formula_; //Deprecated.
+#pragma warning restore 0169, 0414
         Guid formula_script_id_;
 
         #region Properties
@@ -206,7 +210,7 @@ namespace Ultimud
                         }
                         else
                         {
-                            if (stat.Max - change <= bp.Min)
+                            if (stat.Max + change <= bp.Min)
                                 change = bp.Min - stat.Max;
                             stat.Current += change;
                             stat.Max += change;
@@ -227,11 +231,10 @@ namespace Ultimud
                         str += "decreased! (" + Server.Instance.Settings.GetColorCode(Settings.Text.StatDecrease) + change.ToString(Server.Instance.Settings.NumberFormat) + "{color:reset})";
                         applyto.Send(str);
                     }
-
-                    this.mod_ = change;
                 }
             }
 
+            this.mod_ = change;
             return change;
         }
         public long Apply(Object applyto, Object actor, Object target, Ability ability, bool silent)
@@ -264,7 +267,7 @@ namespace Ultimud
             Debug.Assert(stat != null, "Stat is null.");
             if (stat == null)
             {
-                Trace.WriteLine("[undofrom] has no " + stat.Name + " stat.", "ERROR");
+                Trace.WriteLine("[undofrom] has no " + (this.StatName ?? this.StatId.ToString()) + " stat.", "ERROR");
                 return 0;
             }
 
@@ -315,6 +318,18 @@ namespace Ultimud
         {
             foreach (StatModifier mod in mods)
                 mod.Undo(undofrom, influence, silent);
+        }
+        public StatModifier Clone()
+        {
+            StatModifier clone = new StatModifier();
+            clone.statId_ = this.statId_;
+            clone.applyTo_ = this.applyTo_;
+            clone.chance_ = this.chance_;
+            clone.restore_ = this.restore_;
+            clone.silent_ = this.silent_;
+            clone.mod_ = 0;
+            clone.formula_script_id_ = this.formula_script_id_;
+            return clone;
         }
         public override string ToString()
         {

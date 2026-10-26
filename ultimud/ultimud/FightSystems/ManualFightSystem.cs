@@ -11,7 +11,7 @@ namespace Ultimud
 {
     [Serializable]
     [Obfuscation(Exclude = true)]
-    class ManualFightSystem : IFightSystem
+    public class ManualFightSystem : IFightSystem
     {
         public enum ScriptType
         {
@@ -42,8 +42,10 @@ namespace Ultimud
         Lua lua_ = new Lua();
         
         Guid comboAbilityId_;
+#pragma warning disable 0169, 0414
         int comboChance_; //Deprecated.
         int comboLength_; //Deprecated.
+#pragma warning restore 0169, 0414
         List<Guid> comboTriggers_;
         Dictionary<ScriptType, string> scripts_ = new Dictionary<ScriptType, string>();
         RestoreTypes restoretype_ = RestoreTypes.None;
@@ -197,11 +199,22 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public void Merge(IFightSystem other)
         {
-            foreach (KeyValuePair<Object, Object> pair in other.Participants)
-                if (!this.Participants.ContainsKey(pair.Key))
-                    this.Participants.Add(pair.Key, pair.Value);
+            if (other == null || other == this)
+                return;
 
-            other = this;
+            ManualFightSystem otherManual = other as ManualFightSystem;
+            if (otherManual != null && otherManual.updateTimer_ != null)
+                otherManual.updateTimer_.Stop();
+
+            Dictionary<Object, Object> copy = new Dictionary<Object, Object>(other.Participants);
+            other.Participants.Clear();
+            foreach (KeyValuePair<Object, Object> pair in copy)
+            {
+                pair.Key.DieEvent -= other.RemoveParticipant;
+                if (otherManual != null)
+                    pair.Key.AbilityPerformedEvent -= otherManual.o_AbilityPerformedEvent;
+                this.AddParticipant(pair.Key, pair.Value);
+            }
         }
 
         [Obfuscation(Exclude = false)]
@@ -247,7 +260,7 @@ namespace Ultimud
                         return;
                     if (!this.Attack(npc, target) && !npc.Location.Equals(target.Location))
                     {
-                        Stat speedStat = npc.GetStat("speed");
+                        Stat speedStat = (Server.Instance.Settings.SpeedStat != Guid.Empty ? npc.GetStat(Server.Instance.Settings.SpeedStat) : null) ?? npc.GetStat("speed");
                         npc.ReplaceCurrentAction(new TravelAction(npc, target, (speedStat == null ? 3 : (int)speedStat.Current)));
                     }
                 }
@@ -411,7 +424,7 @@ namespace Ultimud
             foreach (Guid abilityId in ability.Defense)
             {
                 Ability defenseAbility = Server.Instance.Get<Ability>(abilityId);
-                if (defenseAbility != null)
+                if (defenseAbility != null && (!(target is Character) || ((Character)target).Abilities.ContainsKey(defenseAbility.Id)))
                 {
                     if (defenseAbility.PrepareTime > 0)
                     {
@@ -425,13 +438,13 @@ namespace Ultimud
                         }
 
                         if (targetsAction != null &&
-                            //targetsAction.Target == actor &&
+                            targetsAction.Target == actor &&
                             targetsAction.Ability == defenseAbility &&
                             targetsAction.Finish())
                             return true;
                     }
-                    else
-                        return defenseAbility.OnPerform(target, actor, false, null);
+                    else if (defenseAbility.OnPerform(target, actor, false, null))
+                        return true;
                 }
             }
 

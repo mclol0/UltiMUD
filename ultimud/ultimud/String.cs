@@ -470,11 +470,15 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public static string HandleBackspace(string str)
         {
+            if (string.IsNullOrEmpty(str))
+                return str;
+            str = str.Replace((char)127, (char)8);
             str = str.TrimStart((char)8);
             int index = -1;
-            while ((index = str.LastIndexOf((char)8)) > 0)
+            while ((index = str.IndexOf((char)8)) > 0)
             {
                 str = str.Remove(index - 1, 2);
+                str = str.TrimStart((char)8);
             }
             return str;
         }
@@ -485,11 +489,33 @@ namespace Ultimud
             str = HandleBackspace(str);
             string newStr = string.Empty;
             foreach (char c in str)
-                if ((char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c) || char.IsSymbol(c)))
+                if (c != '\uFFFD' && (char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c) || char.IsSymbol(c)))
                     newStr += c;
             return newStr;
         }
         
+        [Obfuscation(Exclude = false)]
+        public static string ReplaceVars(string str, Object o)
+        {
+            if (string.IsNullOrEmpty(str))
+                return string.Empty;
+            if (o != null)
+            {
+                str = str.Replace("{name}", o.Name ?? string.Empty);
+                str = str.Replace("{position}", o.Position.ToString());
+                str = str.Replace("{area}", o.Area != null ? o.Area.Name : string.Empty);
+                str = str.Replace("{location}", o.Area != null ? o.Area.Name : string.Empty);
+                str = str.Replace("{money}", o.Value.ToString(Server.Instance != null && Server.Instance.Settings != null ? Server.Instance.Settings.NumberFormat : "N0"));
+                str = str.Replace("{value}", o.Value.ToString(Server.Instance != null && Server.Instance.Settings != null ? Server.Instance.Settings.NumberFormat : "N0"));
+                if (o.Stats != null)
+                {
+                    str = Stat.ResolveVars(str, o.Stats.Values);
+                }
+            }
+            str = Telnet.Colorize(str);
+            return ReplaceVars(str, "0");
+        }
+
         [Obfuscation(Exclude = false)]
         public static string ReplaceVars(string str, string replacement)
         {

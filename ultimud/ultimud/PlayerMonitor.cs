@@ -28,6 +28,8 @@ namespace Ultimud
 
         void user_InputReceived(User t1, string t2)
         {
+            if (this.IsDisposed || !this.IsHandleCreated)
+                return;
             if (this.InvokeRequired)
                 this.Invoke(new Function_void<User, string>(this.user_InputReceived), t1, t2);
             else
@@ -59,7 +61,8 @@ namespace Ultimud
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
             this.user_.InputReceived -= this.user_InputReceived;
-            this.CloseEvent();
+            if (this.CloseEvent != null)
+                this.CloseEvent();
         }
     }
 }

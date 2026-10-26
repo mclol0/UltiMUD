@@ -12,3 +12,9 @@ C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\bin\Debug\Damdai.pdb
 C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\Interfaces.csprojResolveAssemblyReference.cache
 C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\UltimudShared.dll
 C:\Users\Matthew\Dropbox\ultimud\UltiMUD\Interfaces\obj\Debug\UltimudShared.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Debug\UltimudShared.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Debug\UltimudShared.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Debug\Damdai.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Debug\Damdai.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Debug\UltimudShared.dll
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Debug\UltimudShared.pdb

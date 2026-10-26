@@ -53,12 +53,12 @@ namespace Ultimud
 
         public void Broadcast(Event ev, string str)
         {
-            if (this.Events.Get((int)ev))
+            if (this.Events.Get((int)ev) && Server.Instance != null && Server.Instance.Users != null)
             {
                 string msg = this.Output.Replace("{msg}", str);
-                foreach (User user in Server.Instance.Users)
+                foreach (User user in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
                 {
-                    if (user.Flags.Get((int)User.UserFlags.LoggedIn))
+                    if (user != null && user.Flags.Get((int)User.UserFlags.LoggedIn))
                     {
                         user.Send(msg);
                     }

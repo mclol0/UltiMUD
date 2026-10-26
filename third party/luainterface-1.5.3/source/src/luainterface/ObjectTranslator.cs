@@ -171,7 +171,9 @@ namespace LuaInterface
 			string assemblyName=LuaDLL.lua_tostring(luaState,1);
 			try 
 			{
+#pragma warning disable 0618
 				Assembly assembly=Assembly.LoadWithPartialName(assemblyName);
+#pragma warning restore 0618
 
                 try
                 {

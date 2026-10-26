@@ -46,7 +46,10 @@ namespace Damdai.Forms
             {
                 Color fill = renderer.ColorTable.ButtonSelectedHighlight;
 
-                g.FillRectangle(new SolidBrush(fill), crossRect);
+                using (SolidBrush brush = new SolidBrush(fill))
+                {
+                    g.FillRectangle(brush, crossRect);
+                }
 
                 Rectangle borderRect = crossRect;
 

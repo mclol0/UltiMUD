@@ -5,14 +5,14 @@ using System.Reflection;
 namespace Ultimud
 {
     [Obfuscation(Exclude = true)]
-    internal static class Alias
+    public static class Alias
     {
         [NonSerialized]
         [Obfuscation(Exclude = false)]
         static Dictionary<string, Server.InputHandler> commands_ = new Dictionary<string, Server.InputHandler>();
 
         [Obfuscation(Exclude = false)]
-        internal static Dictionary<string, Server.InputHandler> Commands
+        public static Dictionary<string, Server.InputHandler> Commands
         {
             get { return commands_; }
         }
@@ -25,7 +25,7 @@ namespace Ultimud
             commands_.Add("delete", Alias.Delete);
         }
 
-        internal static Server.InputHandler GetHandler(string str)
+        public static Server.InputHandler GetHandler(string str)
         {
             Server.InputHandler handler = null;
             commands_.TryGetValue(str, out handler);
@@ -33,7 +33,7 @@ namespace Ultimud
         }
 
         [Obfuscation(Exclude = false)]
-        internal static bool List(User user)
+        public static bool List(User user)
         {
             if (user.Aliases.Count == 0)
             {
@@ -54,7 +54,7 @@ namespace Ultimud
         }
 
         [Obfuscation(Exclude = false)]
-        internal static bool Add(User user)
+        public static bool Add(User user)
         {
             user.InputHandler = Add;
             if (Command.GetArguments(user, GetAlias, GetAliasedCommand))
@@ -78,7 +78,7 @@ namespace Ultimud
         }
 
         [Obfuscation(Exclude = false)]
-        internal static bool Delete(User user)
+        public static bool Delete(User user)
         {
             user.InputHandler = Delete;
             if (Command.GetArguments(user, GetAlias))
@@ -100,7 +100,7 @@ namespace Ultimud
         }
 
         [Obfuscation(Exclude = false)]
-        internal static bool GetAlias(User user)
+        public static bool GetAlias(User user)
         {
             string arg = user.GetArgument();
             if (string.IsNullOrEmpty(arg))
@@ -117,7 +117,7 @@ namespace Ultimud
         }
 
         [Obfuscation(Exclude = false)]
-        internal static bool GetAliasedCommand(User user)
+        public static bool GetAliasedCommand(User user)
         {
             string arg = user.Command.Trim('\'', '"');
             if (string.IsNullOrEmpty(arg))

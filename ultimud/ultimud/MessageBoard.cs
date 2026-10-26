@@ -7,7 +7,7 @@ namespace Ultimud
 {
     [Serializable]
     [Obfuscation(Exclude = true)]
-    internal partial class MessageBoard : IIdentifiable
+    public partial class MessageBoard : IIdentifiable
     {
         Guid id_;
         string name_;
@@ -64,12 +64,12 @@ namespace Ultimud
                 Server.Instance.DataSets.Add(typeof(MessageBoard), new Dictionary<Guid, IIdentifiable>());
         }
         
-        //public static Server.InputHandler GetHandler(string str)
-        //{
-        //    Server.InputHandler handler = null;
-        //    commands_.TryGetValue(str, out handler);
-        //    return handler;
-        //}
+        public static Server.InputHandler GetHandler(string str)
+        {
+            Server.InputHandler handler = null;
+            commands_.TryGetValue(str, out handler);
+            return handler;
+        }
 
         [Obfuscation(Exclude = false)]
         public static bool List(User user)

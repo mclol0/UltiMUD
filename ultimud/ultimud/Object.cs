@@ -30,9 +30,9 @@ namespace Ultimud
             Immovable,
             Unattackable,
             Money,
-            //Closeable,
+            Closeable,
             CanSwim,
-            //Vehicle,
+            Vehicle,
         }
         public enum Positions
         {
@@ -88,7 +88,9 @@ namespace Ultimud
         List<StatusEffect> statusEffects_ = new List<StatusEffect>();
         int size_;
         string deathMessage_ = "{1} has been destroyed!";
+#pragma warning disable 0169, 0414
         TimeSpan lifeSpan_; //Deprecated.
+#pragma warning restore 0169, 0414
         public bool canRegen_;
         bool closed_;
         bool closeable_;
@@ -200,7 +202,7 @@ namespace Ultimud
         [Browsable(false)]
         public virtual Location Location
         {
-            get { return this.location_; }
+            get { return (this.parent_ is Vehicle ? this.parent_.Location : this.location_); }
             set
             {
                 this.location_ = new Location(value.Area, value.Point);
@@ -243,15 +245,9 @@ namespace Ultimud
             get
             {
                 Object parent = this.Parent;
-
-                if (parent != null)
-                {
-                    while (!(parent is Area))
-                        parent = parent.Parent;
-                    return parent as Area;
-                }
-                else
-                    return null;
+                while (parent != null && !(parent is Area))
+                    parent = parent.Parent;
+                return parent as Area;
             }
         }
 
@@ -527,6 +523,8 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         [field: NonSerialized]
         public static event NewObjectHandler NewObjectEvent;
+        [Obfuscation(Exclude = false)]
+        [field: NonSerialized]
         public event DieHandler DieEvent;
 
         [Obfuscation(Exclude = false)]
@@ -615,6 +613,10 @@ namespace Ultimud
             if (this.ObjectFlags.Get((int)ObjFlags.Flying))
                 this.LeaveTrail();
 
+            Point oldPoint = this.Location.Point;
+            Area oldArea = this.Area;
+            Area.Region oldRegion = (oldArea != null ? oldArea.GetLayer<Area.Region>(oldPoint, true) : null);
+
             if (leavemsg != null)
                 this.Area.Send(leavemsg.Replace("{dir}", direction.ToString().ToLower()), this, null, 0);
 
@@ -622,6 +624,15 @@ namespace Ultimud
 
             if (arrivemsg != null)
                 this.Area.Send(arrivemsg.Replace("{dir}", Area.ReverseDirection(direction).ToString().ToLower()), this, null, 0);
+
+            Area.Region newRegion = (this.Area != null ? this.Area.GetLayer<Area.Region>(newPoint, true) : null);
+            if (oldRegion != newRegion)
+            {
+                if (oldRegion != null)
+                    oldRegion.OnObjectLeave(this);
+                if (newRegion != null)
+                    newRegion.OnObjectEnter(this);
+            }
 
             this.Moved(direction);
             this.CheckAutoEnter();
@@ -1231,6 +1242,52 @@ namespace Ultimud
             if(!silent)
                 this.Send("You have been restored!");
         }
+        public void Enter(Vehicle vehicle)
+        {
+            if (vehicle == null)
+                return;
+
+            if (this.Parent == vehicle)
+            {
+                if (vehicle.Closed)
+                {
+                    this.Send(String.Capitalize(vehicle.Name) + " is closed.");
+                    return;
+                }
+                Location exitLoc = vehicle.Location;
+                this.Location = exitLoc;
+                if (this.Area != null)
+                {
+                    String msg = new String("You disembark from {2}.", "You disembark from {2}.", null, null, "{1} disembarks from {2}.", null);
+                    this.Area.Send(msg, this, vehicle, 0);
+                }
+                return;
+            }
+
+            if (vehicle.Closed)
+            {
+                this.Send(String.Capitalize(vehicle.Name) + " is closed.");
+                return;
+            }
+            if (vehicle.Locked)
+            {
+                this.Send(String.Capitalize(vehicle.Name) + " is locked.");
+                return;
+            }
+            if (vehicle.Capacity > 0 && vehicle.GetChildren<Character>().Count >= vehicle.Capacity)
+            {
+                this.Send(String.Capitalize(vehicle.Name) + " is full.");
+                return;
+            }
+
+            if (this.Area != null)
+            {
+                String msg = new String("You board {2}.", "You board {2}.", null, null, "{1} boards {2}.", null);
+                this.Area.Send(msg, this, vehicle, 0);
+            }
+            this.location_ = vehicle.Location;
+            this.Parent = vehicle;
+        }
         public void Enter(IPortal portal)
         {
             Object o = portal as Object;
@@ -1449,11 +1506,11 @@ namespace Ultimud
                 return this.CanSee(o as Area.Layer, fogOfWar);
             }
 
-            //Area.Layer layer = o.Layer;
-            //if (layer != null && layer.LayerFlags.Get((int)Area.Layer.LayerFlag.Indoors) && layer.CeilingChar > 0 && !layer.Contains(this.Location.Point))
-            //{
-            //    return false;
-            //}
+            Area.Layer layer = o.OnLayer;
+            if (layer != null && layer.LayerFlags.Get((int)Area.Layer.LayerFlag.Indoors) && layer.CeilingChar > 0 && !layer.Contains(this.Location.Point))
+            {
+                return false;
+            }
 
             return true;
         }
