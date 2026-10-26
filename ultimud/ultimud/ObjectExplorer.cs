@@ -40,12 +40,52 @@ namespace Ultimud
         public ObjectExplorer()
         {
             InitializeComponent();
+            this.EnsureExtraNodes();
             this.treeView1.Nodes[0].Expand();
             this.treeView1.MouseClick += delegate(object sender, MouseEventArgs e)
             {
                 if (e.Button == MouseButtons.Right)
                     this.treeView1.SelectedNode = this.treeView1.GetNodeAt(e.Location);
             };
+        }
+
+        void EnsureExtraNodes()
+        {
+            TreeNode serverNode = this.treeView1.Nodes["server"];
+            if (serverNode == null)
+                return;
+
+            if (serverNode.Nodes["abilitygroups"] == null)
+            {
+                ContextMenuStrip abilityGroupsMenu = new ContextMenuStrip(this.components);
+                ToolStripMenuItem newAbilityGroupItem = new ToolStripMenuItem("&New Ability Group");
+                newAbilityGroupItem.Click += new EventHandler(this.newAbilityGroupToolStripMenuItem_Click);
+                abilityGroupsMenu.Items.Add(newAbilityGroupItem);
+
+                TreeNode abilityGroupsNode = new TreeNode("Ability Groups", 20, 20);
+                abilityGroupsNode.Name = "abilitygroups";
+                abilityGroupsNode.ContextMenuStrip = abilityGroupsMenu;
+
+                TreeNode abilitiesNode = serverNode.Nodes["abilities"];
+                int insertIdx = (abilitiesNode != null ? abilitiesNode.Index + 1 : serverNode.Nodes.Count);
+                serverNode.Nodes.Insert(insertIdx, abilityGroupsNode);
+            }
+
+            if (serverNode.Nodes["tags"] == null)
+            {
+                ContextMenuStrip tagsMenu = new ContextMenuStrip(this.components);
+                ToolStripMenuItem newTagItem = new ToolStripMenuItem("&New Tag");
+                newTagItem.Click += new EventHandler(this.newTagToolStripMenuItem_Click);
+                tagsMenu.Items.Add(newTagItem);
+
+                TreeNode tagsNode = new TreeNode("Tags", 6, 6);
+                tagsNode.Name = "tags";
+                tagsNode.ContextMenuStrip = tagsMenu;
+
+                TreeNode itemsNode = serverNode.Nodes["items"];
+                int insertIdx = (itemsNode != null ? itemsNode.Index + 1 : serverNode.Nodes.Count);
+                serverNode.Nodes.Insert(insertIdx, tagsNode);
+            }
         }
 
         void treeView1_MouseClick(object sender, MouseEventArgs e)
@@ -60,6 +100,7 @@ namespace Ultimud
 
         public void Generate(Server server)
         {
+            this.EnsureExtraNodes();
             this.treeView1.Nodes[0].Tag = server;
 
             this.treeView1.BeginUpdate();
@@ -73,7 +114,9 @@ namespace Ultimud
             this.LoadFromServer<StatBlueprint>("stats");
             this.LoadFromServer<StatusEffectBlueprint>("statuseffects");
             this.LoadFromServer<Ability>("abilities");
+            this.LoadFromServer<AbilityGroup>("abilitygroups");
             this.LoadFromServer<Item>("items");
+            this.LoadFromServer<Tag>("tags");
             this.LoadFromServer<Npc>("npcs");
             this.LoadFromServer<Job>("jobs");
             this.LoadFromServer<Race>("races");
@@ -486,6 +529,14 @@ namespace Ultimud
         private void newScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.NewGenericObject<Script>(this.treeView1.Nodes["server"].Nodes["scripts"]);
+        }
+        private void newAbilityGroupToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.NewGenericObject<AbilityGroup>(this.treeView1.Nodes["server"].Nodes["abilitygroups"]);
+        }
+        private void newTagToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.NewGenericObject<Tag>(this.treeView1.Nodes["server"].Nodes["tags"]);
         }
     }
 }

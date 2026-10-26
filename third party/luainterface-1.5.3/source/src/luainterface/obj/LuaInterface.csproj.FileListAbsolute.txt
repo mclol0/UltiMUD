@@ -1,5 +1,0 @@
-C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\Third Party\luainterface-1.5.3\Built\LuaInterface.dll
-C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\Third Party\luainterface-1.5.3\Built\LuaInterface.pdb
-C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\ResolveAssemblyReference.cache
-C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.dll
-C:\Documents and Settings\Administrator\My Documents\Visual Studio 2005\Projects\Third Party\luainterface-1.5.3\source\src\LuaInterface\obj\Debug\LuaInterface.pdb

@@ -148,12 +148,23 @@ namespace Ultimud
 
             if (!(victim is Npc))
             {
+                Character ch = victim as Character;
                 int amount = victim.GetChildren<Item>().Count * this.LostItemPercentage / 100;
                 for (int x = 0; x < amount; ++x)
                 {
                     List<Item> items = victim.GetChildren<Item>();
                     if (items.Count > 0)
-                        items[Server.RandomNumber.Next(items.Count)].Parent = (killer is Character ? killer : victim.Area);
+                    {
+                        Item lostItem = items[Server.RandomNumber.Next(items.Count)];
+                        if (ch != null)
+                            ch.Remove(lostItem, true);
+                        if (killer is Character)
+                            lostItem.Parent = killer;
+                        else if (victim.Location != null && victim.Location.Area != null)
+                            lostItem.Location = victim.Location;
+                        else
+                            lostItem.Parent = victim.Area;
+                    }
                 }
 
                 if (this.LostMoneyPercentage > 0 && victim.Value > 0)
@@ -180,7 +191,6 @@ namespace Ultimud
                 }
 
                 Location loc = this.TransferLocation;
-                Character ch = victim as Character;
                 if (ch != null)
                 {
                     Race race = ch.Race;

@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaces", "Interfaces\In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaInterface", "..\Third Party\luainterface-1.5.3\source\src\LuaInterface\LuaInterface.csproj", "{F55CABBB-4108-4A39-94E1-581FD46DC021}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater", "Updater\Updater.csproj", "{8A3D94B2-4F51-4A1E-9C7A-6E2F901D5B34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A3D94B2-4F51-4A1E-9C7A-6E2F901D5B34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A3D94B2-4F51-4A1E-9C7A-6E2F901D5B34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A3D94B2-4F51-4A1E-9C7A-6E2F901D5B34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A3D94B2-4F51-4A1E-9C7A-6E2F901D5B34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

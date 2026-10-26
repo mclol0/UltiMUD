@@ -870,7 +870,7 @@ namespace Ultimud
                 errorMsg = "Target is out of range.";
             else if (this.Style == Styles.Aggressive)
             {
-                if (!(target is Npc) && target is Character && !Server.Instance.Settings.PvpSettings.Allowed)
+                if (!(actor is Npc) && actor is Character && !(target is Npc) && target is Character && !Server.Instance.Settings.PvpSettings.Allowed)
                     errorMsg = "Player vs. player combat is not allowed here.";
                 else if (actor.Area.AreaFlags.Get((int)Area.AreaFlag.NoAttack) || actorLayer != null && actorLayer.LayerFlags.Get((int)Area.Layer.LayerFlag.NoAttack))
                     errorMsg = "You can't attack here.";

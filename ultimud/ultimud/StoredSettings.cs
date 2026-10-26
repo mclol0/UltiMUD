@@ -12,6 +12,8 @@ namespace Ultimud
     {
         [Obfuscation(Exclude = false)] int port_ = 1234;
         [Obfuscation(Exclude = false)] string gamefile_;
+        [Obfuscation(Exclude = false)] string updateUrl_;
+        [Obfuscation(Exclude = false)] bool autoCheckForUpdates_ = true;
         [Obfuscation(Exclude = false)] static public StoredSettings Instance;
         [Obfuscation(Exclude = false)] static string savefile_ = System.Windows.Forms.Application.StartupPath + "\\settings.ini";
 
@@ -27,6 +29,18 @@ namespace Ultimud
             get { return this.gamefile_; }
             set { this.gamefile_ = value; }
         }
+
+        public string UpdateUrl
+        {
+            get { return this.updateUrl_; }
+            set { this.updateUrl_ = value; }
+        }
+
+        public bool AutoCheckForUpdates
+        {
+            get { return this.autoCheckForUpdates_; }
+            set { this.autoCheckForUpdates_ = value; }
+        }
         #endregion
 
         [Obfuscation(Exclude = false)]
@@ -38,7 +52,8 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public static void Load()
         {
-            if (Instance != null) throw new ApplicationException("Stored settings have already been loaded.");
+            if (Instance != null)
+                return;
 
             try
             {

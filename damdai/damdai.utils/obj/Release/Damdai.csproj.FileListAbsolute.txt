@@ -1,3 +1,0 @@
-c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\RELEASE\Damdai.dll
-c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Release\Damdai.dll
-c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Release\Damdai.csprojResolveAssemblyReference.cache

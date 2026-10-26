@@ -220,7 +220,102 @@ namespace Ultimud
             StoredSettings.Save();
 
             this.propertyGrid1.SelectedObject = server;
-            //this.InitImportExportMenu();
+            this.InitImportExportMenu();
+        }
+
+        internal static int ExportDataSet(Server server, Type type, string filePath)
+        {
+            if (server == null || type == null || string.IsNullOrEmpty(filePath) || !server.DataSets.ContainsKey(type))
+                return 0;
+
+            Dictionary<Guid, IIdentifiable> dataset = server.DataSets[type];
+            string dir = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            Damdai.Serialization.Binary.Serialize(dataset, filePath);
+            return dataset.Count;
+        }
+
+        internal static int ImportDataSet(Server server, Type type, string filePath, bool overwriteExisting)
+        {
+            if (server == null || type == null || string.IsNullOrEmpty(filePath) || !File.Exists(filePath) || !server.DataSets.ContainsKey(type))
+                return 0;
+
+            Dictionary<Guid, IIdentifiable> imported = Damdai.Serialization.Binary.Deserialize<Dictionary<Guid, IIdentifiable>>(filePath, new Server.SerializationBinder());
+            if (imported == null)
+                return 0;
+
+            int count = 0;
+            Dictionary<Guid, IIdentifiable> target = server.DataSets[type];
+            lock (target)
+            {
+                foreach (KeyValuePair<Guid, IIdentifiable> pair in imported)
+                {
+                    if (overwriteExisting || !target.ContainsKey(pair.Key))
+                    {
+                        target[pair.Key] = pair.Value;
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        void InitImportExportMenu()
+        {
+            this.importToolStripMenuItem.DropDownItems.Clear();
+            this.exportToolStripMenuItem.DropDownItems.Clear();
+
+            if (this.server_ == null)
+                return;
+
+            this.importToolStripMenuItem.Visible = true;
+            this.exportToolStripMenuItem.Visible = true;
+            this.toolStripSeparator4.Visible = true;
+
+            List<Type> types = new List<Type>(this.server_.DataSets.Keys);
+            types.Sort(delegate(Type t1, Type t2) { return string.Compare(t1.Name, t2.Name, StringComparison.OrdinalIgnoreCase); });
+
+            foreach (Type type in types)
+            {
+                Type capturedType = type;
+
+                ToolStripMenuItem importItem = new ToolStripMenuItem(capturedType.Name + " DataSet (.ds)");
+                importItem.Click += delegate(object sender, EventArgs e)
+                {
+                    using (OpenFileDialog dlg = new OpenFileDialog())
+                    {
+                        dlg.Title = "Import " + capturedType.Name + " DataSet";
+                        dlg.Filter = capturedType.Name + " DataSet (" + capturedType.Name + ".ds)|*.ds|All Files (*.*)|*.*";
+                        dlg.FileName = capturedType.Name + ".ds";
+                        if (dlg.ShowDialog(this) == DialogResult.OK)
+                        {
+                            int count = ImportDataSet(this.server_, capturedType, dlg.FileName, true);
+                            this.objectTree1.Generate(this.server_);
+                            this.server_.Save();
+                            MessageBox.Show(this, "Imported " + count + " " + capturedType.Name + " object(s).", "Import Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                };
+                this.importToolStripMenuItem.DropDownItems.Add(importItem);
+
+                ToolStripMenuItem exportItem = new ToolStripMenuItem(capturedType.Name + " DataSet (.ds)");
+                exportItem.Click += delegate(object sender, EventArgs e)
+                {
+                    using (SaveFileDialog dlg = new SaveFileDialog())
+                    {
+                        dlg.Title = "Export " + capturedType.Name + " DataSet";
+                        dlg.Filter = capturedType.Name + " DataSet (*.ds)|*.ds";
+                        dlg.FileName = capturedType.Name + ".ds";
+                        if (dlg.ShowDialog(this) == DialogResult.OK)
+                        {
+                            int count = ExportDataSet(this.server_, capturedType, dlg.FileName);
+                            MessageBox.Show(this, "Exported " + count + " " + capturedType.Name + " object(s).", "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                };
+                this.exportToolStripMenuItem.DropDownItems.Add(exportItem);
+            }
         }
         protected override void OnClosing(CancelEventArgs e)
         {
@@ -441,59 +536,201 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
                 this.CalculateStats(o, ref stats);
             }
         }
-        void CheckForUpdates(bool silent, bool prompt)
+        internal static bool ParseUpdateManifest(string content, Version currentVersion, out Version remoteVersion, out string downloadUrl, out string releaseNotes)
         {
-            //try
-            //{
-            //    this.toolStripStatusLabel1.Text = "Checking for updates...";
-            //    using (com.damdai.www.WebService service = new Ultimud.com.damdai.www.WebService())
-            //    {
-            //        string url = null;
-            //        if (service.UpdateAvailable(Assembly.GetExecutingAssembly().GetName().Version.ToString(), out url))
-            //        {
-            //            if (!prompt || MessageBox.Show("A new version is available.\r\nWould you like to upgrade to the latest version? (Recommended)",
-            //                "Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
-            //            {
-            //                this.toolStripStatusLabel1.Text = "Downloading update...";
-            //                this.toolStripProgressBar1.Value = 0;
-            //                this.toolStripProgressBar1.Visible = true;
-            //                WebClient client = new WebClient();
-            //                client.DownloadFileCompleted += new AsyncCompletedEventHandler(client_DownloadFileCompleted);
-            //                client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
-            //                client.DownloadFileAsync(new Uri(url), url.Substring(url.LastIndexOf('/') + 1));
-            //                return;
-            //            }
-            //        }
-            //        else
-            //        {
-            //            if (!silent)
-            //                MessageBox.Show("There are no updates available.", "Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            //        }
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    Debug.WriteLine(e.ToString());
-            //    if (!silent)
-            //    {
-            //        MessageBox.Show("An error occurred while checking for updates.\r\n" + e.Message, "Error",
-            //            MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //    }
-            //}
+            remoteVersion = null;
+            downloadUrl = null;
+            releaseNotes = null;
 
-            //this.toolStripStatusLabel1.Text = null;
+            if (string.IsNullOrEmpty(content))
+                return false;
+
+            string trimmed = content.Trim();
+            try
+            {
+                if (trimmed.StartsWith("<"))
+                {
+                    System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+                    doc.LoadXml(trimmed);
+                    System.Xml.XmlNode verNode = doc.SelectSingleNode("//Version") ?? doc.SelectSingleNode("//version");
+                    System.Xml.XmlNode urlNode = doc.SelectSingleNode("//DownloadUrl") ?? doc.SelectSingleNode("//Url") ?? doc.SelectSingleNode("//url");
+                    System.Xml.XmlNode notesNode = doc.SelectSingleNode("//ReleaseNotes") ?? doc.SelectSingleNode("//Notes") ?? doc.SelectSingleNode("//notes");
+                    if (verNode != null)
+                        remoteVersion = new Version(verNode.InnerText.Trim().TrimStart('v', 'V'));
+                    if (urlNode != null)
+                        downloadUrl = urlNode.InnerText.Trim();
+                    if (notesNode != null)
+                        releaseNotes = notesNode.InnerText.Trim();
+                }
+                else if (trimmed.StartsWith("{"))
+                {
+                    System.Text.RegularExpressions.Match verMatch = System.Text.RegularExpressions.Regex.Match(trimmed, "\"(?:version|tag_name)\"\\s*:\\s*\"v?([0-9]+(?:\\.[0-9]+){1,3})\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    System.Text.RegularExpressions.Match urlMatch = System.Text.RegularExpressions.Regex.Match(trimmed, "\"(?:url|downloadUrl|browser_download_url)\"\\s*:\\s*\"([^\"]+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    System.Text.RegularExpressions.Match notesMatch = System.Text.RegularExpressions.Regex.Match(trimmed, "\"(?:notes|releaseNotes|body)\"\\s*:\\s*\"([^\"]*)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (verMatch.Success)
+                        remoteVersion = new Version(verMatch.Groups[1].Value);
+                    if (urlMatch.Success)
+                        downloadUrl = urlMatch.Groups[1].Value;
+                    if (notesMatch.Success)
+                        releaseNotes = notesMatch.Groups[1].Value;
+                }
+                else
+                {
+                    string[] lines = trimmed.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (lines.Length >= 2)
+                    {
+                        remoteVersion = new Version(lines[0].Trim().TrimStart('v', 'V'));
+                        downloadUrl = lines[1].Trim();
+                        if (lines.Length >= 3)
+                            releaseNotes = lines[2].Trim();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to parse update manifest: " + ex.Message, "WARNING");
+                return false;
+            }
+
+            return (remoteVersion != null && !string.IsNullOrEmpty(downloadUrl) && remoteVersion > currentVersion);
+        }
+
+        internal void CheckForUpdates(bool silent, bool prompt)
+        {
+            try
+            {
+                if (silent && StoredSettings.Instance != null && !StoredSettings.Instance.AutoCheckForUpdates)
+                    return;
+
+                Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                string updateUrl = (StoredSettings.Instance != null ? StoredSettings.Instance.UpdateUrl : null);
+                if (string.IsNullOrEmpty(updateUrl))
+                {
+                    string localManifest = Path.Combine(Application.StartupPath, "update_manifest.xml");
+                    if (File.Exists(localManifest))
+                        updateUrl = localManifest;
+                }
+
+                if (string.IsNullOrEmpty(updateUrl))
+                {
+                    if (!silent)
+                    {
+                        MessageBox.Show(
+                            "You are running UltiMUD v" + currentVersion + ".\r\nThere are no updates available.",
+                            "Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    this.toolStripStatusLabel1.Text = null;
+                    return;
+                }
+
+                this.toolStripStatusLabel1.Text = "Checking for updates...";
+                ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072; // TLS 1.2
+
+                string manifestContent;
+                if (File.Exists(updateUrl))
+                {
+                    manifestContent = File.ReadAllText(updateUrl);
+                }
+                else
+                {
+                    using (WebClient wc = new WebClient())
+                    {
+                        wc.Headers.Add("User-Agent", "UltiMUD/" + currentVersion);
+                        manifestContent = wc.DownloadString(updateUrl);
+                    }
+                }
+
+                Version remoteVersion;
+                string downloadUrl;
+                string releaseNotes;
+                if (ParseUpdateManifest(manifestContent, currentVersion, out remoteVersion, out downloadUrl, out releaseNotes))
+                {
+                    string msg = "A new version (v" + remoteVersion + ") is available.\r\n";
+                    if (!string.IsNullOrEmpty(releaseNotes))
+                        msg += "\r\nRelease Notes:\r\n" + releaseNotes + "\r\n\r\n";
+                    msg += "Would you like to upgrade to the latest version? (Recommended)";
+
+                    if (!prompt || MessageBox.Show(msg, "Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                    {
+                        this.toolStripStatusLabel1.Text = "Downloading update...";
+                        this.toolStripProgressBar1.Value = 0;
+                        this.toolStripProgressBar1.Visible = true;
+                        string targetZip = Path.Combine(Application.StartupPath, "Update.zip");
+                        if (File.Exists(downloadUrl))
+                        {
+                            File.Copy(downloadUrl, targetZip, true);
+                            this.client_DownloadFileCompleted(this, new AsyncCompletedEventArgs(null, false, targetZip));
+                            return;
+                        }
+                        WebClient client = new WebClient();
+                        client.Headers.Add("User-Agent", "UltiMUD/" + currentVersion);
+                        client.DownloadFileCompleted += new AsyncCompletedEventHandler(client_DownloadFileCompleted);
+                        client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
+                        client.DownloadFileAsync(new Uri(downloadUrl), targetZip, targetZip);
+                        return;
+                    }
+                }
+                else
+                {
+                    if (!silent)
+                        MessageBox.Show("There are no updates available. (Current version: v" + currentVersion + ")", "Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.ToString());
+                if (!silent)
+                {
+                    MessageBox.Show("An error occurred while checking for updates.\r\n" + e.Message, "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
+            this.toolStripStatusLabel1.Text = null;
         }
         void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
-            this.toolStripProgressBar1.Maximum = (int)e.TotalBytesToReceive;
-            this.toolStripProgressBar1.Value = (int)e.BytesReceived;
+            if (e.TotalBytesToReceive > 0)
+            {
+                this.toolStripProgressBar1.Maximum = (int)System.Math.Min(int.MaxValue, e.TotalBytesToReceive);
+                this.toolStripProgressBar1.Value = (int)System.Math.Min(this.toolStripProgressBar1.Maximum, System.Math.Max(0, e.BytesReceived));
+            }
         }
         void client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
+            this.toolStripProgressBar1.Visible = false;
+            string zipPath = (e.UserState as string) ?? Path.Combine(Application.StartupPath, "Update.zip");
+
+            if (e.Cancelled || e.Error != null)
+            {
+                this.toolStripStatusLabel1.Text = "Update download failed.";
+                if (File.Exists(zipPath))
+                {
+                    try { File.Delete(zipPath); } catch { }
+                }
+                if (e.Error != null)
+                {
+                    MessageBox.Show("An error occurred while downloading the update:\r\n" + e.Error.Message,
+                        "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return;
+            }
+
+            string updaterExe = Path.Combine(Application.StartupPath, "Updater.exe");
+            if (!File.Exists(updaterExe))
+            {
+                this.toolStripStatusLabel1.Text = "Updater.exe not found.";
+                MessageBox.Show("Update package downloaded to:\r\n" + zipPath + "\r\n\r\nHowever, Updater.exe was not found in the application directory.",
+                    "Update", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             this.toolStripStatusLabel1.Text = "Download complete, updating...";
             using (Process p = new Process())
             {
-                p.StartInfo.FileName = Application.StartupPath + "\\Updater.exe";
+                p.StartInfo.FileName = updaterExe;
+                p.StartInfo.Arguments = "\"" + zipPath + "\"";
+                p.StartInfo.WorkingDirectory = Application.StartupPath;
                 p.Start();
                 this.Close();
             }
