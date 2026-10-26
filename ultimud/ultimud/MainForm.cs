@@ -35,7 +35,12 @@ namespace Ultimud
 
         public string ServerPath
         {
-            get { return Application.StartupPath + "\\data\\muds\\" + String.ReplaceChars(this.server_.Settings.Name, "/\\:*?\"<>|", '_'); }
+            get
+            {
+                Server srv = this.server_ ?? Server.Instance;
+                string mudName = (srv != null && srv.Settings != null && !string.IsNullOrEmpty(srv.Settings.Name)) ? srv.Settings.Name : "Unnamed";
+                return Application.StartupPath + "\\data\\muds\\" + String.ReplaceChars(mudName, "/\\:*?\"<>|", '_');
+            }
         }
 
         #endregion
@@ -53,15 +58,27 @@ namespace Ultimud
             InitializeComponent();
 
             instance_ = this;
-            StreamWriter writer = File.CreateText(Application.StartupPath + "\\log.txt");
-            writer.AutoFlush = true;
-            Trace.Listeners.Add(new TextWriterTraceListener(writer));
+            try
+            {
+                StreamWriter writer = new StreamWriter(new FileStream(Application.StartupPath + "\\log.txt", FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+                writer.AutoFlush = true;
+                Trace.Listeners.Add(new TextWriterTraceListener(writer));
+            }
+            catch { }
             LogTraceListener ltl = new LogTraceListener();
             ltl.LogEvent += new Function_void<string, string>(ltl_LogEvent);
             Trace.Listeners.Add(ltl);
+            this.Disposed += delegate
+            {
+                Trace.Listeners.Remove(ltl);
+                if (instance_ == this)
+                    instance_ = null;
+            };
             this.propertyGrid1.PropertyValueChanged += delegate(object s, PropertyValueChangedEventArgs e)
             {
                 this.propertyGrid1.Tag = true;
+                if (this.propertyGrid1.SelectedObject is ISaveable)
+                    ((ISaveable)this.propertyGrid1.SelectedObject).Save();
             };
             this.objectTree1.EditObject += this.objectTree1_EditObjectEvent;
             this.objectTree1.ObjectSelected += delegate(object o)
@@ -102,6 +119,15 @@ namespace Ultimud
             this.toolStripStatusLabel1.Text = string.Empty;
             this.toolStripStatusLabel2.Text = string.Empty;
             this.toolStripStatusLabel3.Text = string.Empty;
+            this.indexToolStripMenuItem.Text = "&Lua Scripting Guide && API Reference";
+            ToolStripButton guideBtn = new ToolStripButton("Scripting Guide (F1)");
+            guideBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            guideBtn.Font = new Font(this.toolStrip1.Font, FontStyle.Bold);
+            guideBtn.ForeColor = Color.FromArgb(20, 70, 140);
+            guideBtn.ToolTipText = "Open the UltiMUD Lua Scripting Guide & API Reference (F1)";
+            guideBtn.Click += this.indexToolStripMenuItem_Click;
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(guideBtn);
             this.areaCanvas1.ViewType = AreaCanvas.View.Design2;
             this.CheckForUpdates(true, true);
             this.ShowChangeLog();
@@ -116,17 +142,25 @@ namespace Ultimud
 
         void ltl_LogEvent(string t1, string t2)
         {
-            if (this.InvokeRequired)
-                this.Invoke(new Function_void<string, string>(this.ltl_LogEvent), t1, t2);
-            else
+            if (this.IsDisposed || this.Disposing || this.richTextBox1 == null || this.richTextBox1.IsDisposed)
+                return;
+            try
             {
-                if (this.richTextBox1.TextLength > 0)
-                    this.richTextBox1.AppendText("\r\n");
-                if (string.IsNullOrEmpty(t2))
-                    this.richTextBox1.AppendText(DateTime.Now + ": " + t1);
+                if (this.InvokeRequired)
+                    this.Invoke(new Function_void<string, string>(this.ltl_LogEvent), t1, t2);
                 else
-                    this.richTextBox1.AppendText(DateTime.Now + ": " + t2 + ": " + t1);
-                this.richTextBox1.ScrollToCaret();
+                {
+                    if (this.richTextBox1.TextLength > 0)
+                        this.richTextBox1.AppendText("\r\n");
+                    if (string.IsNullOrEmpty(t2))
+                        this.richTextBox1.AppendText(DateTime.Now + ": " + t1);
+                    else
+                        this.richTextBox1.AppendText(DateTime.Now + ": " + t2 + ": " + t1);
+                    this.richTextBox1.ScrollToCaret();
+                }
+            }
+            catch
+            {
             }
         }
 
@@ -221,6 +255,133 @@ namespace Ultimud
 
             this.propertyGrid1.SelectedObject = server;
             this.InitImportExportMenu();
+            this.InitServerConsole();
+        }
+
+        Panel consolePanel_;
+        TextBox consoleInput_;
+
+        void InitServerConsole()
+        {
+            if (this.consolePanel_ != null || this.tabPage1 == null)
+                return;
+
+            this.consolePanel_ = new Panel();
+            this.consolePanel_.Name = "consolePanel";
+            this.consolePanel_.Dock = DockStyle.Bottom;
+            this.consolePanel_.Height = 28;
+            this.consolePanel_.Padding = new Padding(4, 3, 4, 3);
+
+            Label lbl = new Label();
+            lbl.Text = "Console:";
+            lbl.AutoSize = false;
+            lbl.Width = 56;
+            lbl.Dock = DockStyle.Left;
+            lbl.TextAlign = ContentAlignment.MiddleLeft;
+
+            Button execBtn = new Button();
+            execBtn.Text = "Execute";
+            execBtn.Width = 68;
+            execBtn.Dock = DockStyle.Right;
+
+            this.consoleInput_ = new TextBox();
+            this.consoleInput_.Name = "consoleInput";
+            this.consoleInput_.Dock = DockStyle.Fill;
+
+            EventHandler runCmd = delegate(object s, EventArgs ev)
+            {
+                string cmdText = this.consoleInput_.Text.Trim();
+                if (!string.IsNullOrEmpty(cmdText))
+                {
+                    this.consoleInput_.Clear();
+                    this.ExecuteConsoleCommand(cmdText);
+                }
+            };
+
+            execBtn.Click += runCmd;
+            this.consoleInput_.KeyDown += delegate(object s, KeyEventArgs ke)
+            {
+                if (ke.KeyCode == Keys.Enter)
+                {
+                    ke.SuppressKeyPress = true;
+                    runCmd(s, EventArgs.Empty);
+                }
+            };
+
+            this.consolePanel_.Controls.Add(this.consoleInput_);
+            this.consolePanel_.Controls.Add(lbl);
+            this.consolePanel_.Controls.Add(execBtn);
+            this.tabPage1.Controls.Add(this.consolePanel_);
+        }
+
+        internal string ExecuteConsoleCommand(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            string trimmed = input.Trim();
+            string[] parts = trimmed.Split(new char[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+            string cmd = parts[0].ToLowerInvariant();
+            string arg = parts.Length > 1 ? parts[1] : string.Empty;
+            string response;
+
+            switch (cmd)
+            {
+                case "help":
+                    response = "Console commands: status, users, broadcast <msg>, save, clear, help";
+                    break;
+                case "status":
+                    if (this.server_ == null)
+                        response = "No server loaded.";
+                    else
+                        response = string.Format("Server '{0}' | Running: {1} | Online Users: {2} | Commands: {3}",
+                            this.server_.Settings.Name, this.server_.IsRunning, this.server_.Users.Count, Command.Commands.Count);
+                    break;
+                case "users":
+                    if (this.server_ == null || this.server_.Users.Count == 0)
+                        response = "No users currently online.";
+                    else
+                    {
+                        List<string> names = new List<string>();
+                        foreach (User u in Damdai.Collections.Util.CopyList<User>(this.server_.Users))
+                            if (u != null)
+                                names.Add(u.ToString());
+                        response = "Online users (" + names.Count + "): " + string.Join(", ", names.ToArray());
+                    }
+                    break;
+                case "broadcast":
+                case "announce":
+                    if (string.IsNullOrEmpty(arg))
+                        response = "Usage: broadcast <message>";
+                    else if (this.server_ != null)
+                    {
+                        this.server_.Echo("{color:brightyellow}[SERVER CONSOLE] " + arg + "{color:reset}");
+                        response = "Broadcast sent: " + arg;
+                    }
+                    else
+                        response = "No server loaded.";
+                    break;
+                case "save":
+                    if (this.server_ != null)
+                    {
+                        this.server_.Save();
+                        response = "Server saved.";
+                    }
+                    else
+                        response = "Cannot save: no server loaded.";
+                    break;
+                case "clear":
+                    if (this.richTextBox1 != null && !this.richTextBox1.IsDisposed)
+                        this.richTextBox1.Clear();
+                    response = "Log cleared.";
+                    break;
+                default:
+                    response = "Unknown console command: " + cmd + " (type 'help' for list)";
+                    break;
+            }
+
+            Trace.WriteLine(response, "CONSOLE");
+            return response;
         }
 
         internal static int ExportDataSet(Server server, Type type, string filePath)
@@ -932,7 +1093,7 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
         #region Help Menu
         private void indexToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            System.Windows.Forms.Help.ShowHelp(this, this.helpProvider1.HelpNamespace);
+            Damdai.Forms.TextEditorWindow.ShowScriptingGuide(this);
         }
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)

@@ -147,15 +147,805 @@ namespace Ultimud
                     }
                 }
 
-                if (commands_.Count == 0)
+                SeedDefaultCommands(!string.IsNullOrEmpty(loadpath) ? loadpath : serverpath);
+
+                foreach (Command existingCmd in commands_)
                 {
-                    SeedDefaultCommands(serverpath);
+                    if (existingCmd.Name != null && existingCmd.Name.Equals("chat", StringComparison.OrdinalIgnoreCase) && existingCmd.Aliases != null)
+                        existingCmd.Aliases.RemoveAll(delegate(string a) { return a.Equals("gossip", StringComparison.OrdinalIgnoreCase); });
                 }
 
                 commands_.Sort(delegate(Command cmd1, Command cmd2)
                 {
                     return cmd1.priority_.CompareTo(cmd2.priority_);
                 });
+            }
+        }
+
+        static bool IsLegacyStubScript(string script)
+        {
+            if (string.IsNullOrEmpty(script))
+                return true;
+            string trimmed = script.Trim();
+            return trimmed.StartsWith("luanet.load_assembly('Ultimud')") &&
+                   trimmed.Contains("finished = Command.Do") &&
+                   !trimmed.Contains("--");
+        }
+
+        static string GetDefaultLuaScript(string name, string methodName)
+        {
+            switch (name.ToLowerInvariant())
+            {
+                case "withdraw":
+                    return
+@"-- ============================================================================
+-- Command: withdraw
+-- Syntax : withdraw <amount|all>
+-- Customize REQUIRE_BANK_LOCATION, WITHDRAW_FEE_PERCENT, or messages below!
+-- ============================================================================
+local REQUIRE_BANK_LOCATION = false
+local WITHDRAW_FEE_PERCENT = 0
+
+local arg = user:GetArgument()
+if arg == nil or arg == '' then
+    user:Send('Usage: withdraw <amount|all>')
+    return true
+end
+
+if REQUIRE_BANK_LOCATION and Command.GetShop(user) == nil then
+    user:Send('You must be at a bank or shop to withdraw gold.')
+    return true
+end
+
+local amount = 0
+if string.lower(arg) == 'all' then
+    amount = user.BankBalance
+else
+    amount = Command.ToInt(arg, -1)
+    if amount <= 0 then
+        user:Send('Please specify a valid positive amount to withdraw.')
+        return true
+    end
+end
+
+if amount <= 0 or amount > user.BankBalance then
+    user:Send(""You don't have that much gold in your bank account."")
+    return true
+end
+
+local fee = math.floor(amount * WITHDRAW_FEE_PERCENT / 100)
+local received = amount - fee
+
+user.BankBalance = user.BankBalance - amount
+char.Value = char.Value + received
+
+user:Send('You withdraw $' .. Command.FormatNumber(received) .. '. Remaining bank balance: $' .. Command.FormatNumber(user.BankBalance) .. '.')
+return true";
+
+                case "deposit":
+                    return
+@"-- ============================================================================
+-- Command: deposit
+-- Syntax : deposit <amount|all>
+-- Customize REQUIRE_BANK_LOCATION, DEPOSIT_FEE_PERCENT, or messages below!
+-- ============================================================================
+local REQUIRE_BANK_LOCATION = false
+local DEPOSIT_FEE_PERCENT = 0
+
+local arg = user:GetArgument()
+if arg == nil or arg == '' then
+    user:Send('Usage: deposit <amount|all>')
+    return true
+end
+
+if REQUIRE_BANK_LOCATION and Command.GetShop(user) == nil then
+    user:Send('You must be at a bank or shop to deposit gold.')
+    return true
+end
+
+local amount = 0
+if string.lower(arg) == 'all' then
+    amount = char.Value
+else
+    amount = Command.ToInt(arg, -1)
+    if amount <= 0 then
+        user:Send('Please specify a valid positive amount to deposit.')
+        return true
+    end
+end
+
+if amount <= 0 or amount > char.Value then
+    user:Send(""You don't have that much gold on hand."")
+    return true
+end
+
+local fee = math.floor(amount * DEPOSIT_FEE_PERCENT / 100)
+local credited = amount - fee
+
+char.Value = char.Value - amount
+user.BankBalance = user.BankBalance + credited
+
+user:Send('You deposit $' .. Command.FormatNumber(credited) .. '. New bank balance: $' .. Command.FormatNumber(user.BankBalance) .. '.')
+return true";
+
+                case "bank":
+                    return
+@"-- ============================================================================
+-- Command: bank (alias: balance)
+-- Syntax : bank [deposit|withdraw <amount>]
+-- Customize BANK_HEADER or statement formatting below!
+-- ============================================================================
+local BANK_HEADER = '{color:brightyellow}=== Royal Bank Statement ==={color:reset}'
+
+local sub = user:GetArgument()
+if sub ~= nil and sub ~= '' then
+    local lower = string.lower(sub)
+    if lower == 'deposit' then
+        return Command.DoDeposit(user)
+    elseif lower == 'withdraw' then
+        return Command.DoWithdraw(user)
+    end
+end
+
+user:Send(BANK_HEADER .. '\r\n' ..
+    'Gold on Hand: $' .. Command.FormatNumber(char.Value) .. '\r\n' ..
+    'Bank Balance: $' .. Command.FormatNumber(user.BankBalance))
+return true";
+
+                case "money":
+                    return
+@"-- ============================================================================
+-- Command: money (alias: gold)
+-- Customize currency display below!
+-- ============================================================================
+local CURRENCY_SYMBOL = '$'
+user:Send('You have ' .. CURRENCY_SYMBOL .. Command.FormatNumber(char.Value) .. '.')
+return true";
+
+                case "sacrifice":
+                    return
+@"-- ============================================================================
+-- Command: sacrifice (alias: junk)
+-- Syntax : sacrifice <item>
+-- Customize MIN_REWARD, MAX_REWARD, VALUE_DIVISOR, and message below!
+-- ============================================================================
+local MIN_REWARD = 1
+local MAX_REWARD = 10
+local VALUE_DIVISOR = 10
+
+local arg = user:GetArgument()
+if arg == nil or arg == '' then
+    user:Send('Sacrifice what?')
+    return true
+end
+
+local item = Command.FindItemHereOrInv(user, arg)
+if item == nil then
+    user:Send(""You don't see that item here."")
+    return true
+end
+
+local reward = math.floor(item.Value / VALUE_DIVISOR) + 1
+if reward < MIN_REWARD then reward = MIN_REWARD end
+if reward > MAX_REWARD then reward = MAX_REWARD end
+
+local itemName = item.Name
+item.Parent = nil
+char.Value = char.Value + reward
+
+user:Send('You sacrifice ' .. itemName .. ' and receive $' .. reward .. '.')
+return true";
+
+                case "north":
+                case "south":
+                case "east":
+                case "west":
+                case "northeast":
+                case "northwest":
+                case "southeast":
+                case "southwest":
+                    string capDir = char.ToUpper(name[0]) + name.Substring(1).ToLower();
+                    return
+@"-- ============================================================================
+-- Command: " + name + @"
+-- Customize movement messages below!
+-- ============================================================================
+local DIRECTION   = '" + capDir + @"'
+local LEAVE_SELF  = 'You move {dir}.'
+local LEAVE_ROOM  = '{1} leaves {dir}.'
+local ARRIVE_ROOM = '{1} arrives from the {dir}.'
+
+return Command.MoveDir(user, DIRECTION, LEAVE_SELF, LEAVE_ROOM, ARRIVE_ROOM)";
+
+                case "stand":
+                    return
+@"-- ============================================================================
+-- Command: stand
+-- Customize position change messages below!
+-- ============================================================================
+return Command.SetPosition(user, 'Stopped',
+    'You stand up.',
+    '{1} stands up.',
+    'You are already standing.')";
+
+                case "sit":
+                    return
+@"-- ============================================================================
+-- Command: sit
+-- Customize position change messages below!
+-- ============================================================================
+return Command.SetPosition(user, 'Sitting',
+    'You sit down.',
+    '{1} sits down.',
+    'You are already sitting.')";
+
+                case "rest":
+                    return
+@"-- ============================================================================
+-- Command: rest
+-- Customize position change messages below!
+-- ============================================================================
+return Command.SetPosition(user, 'Resting',
+    'You sit down and rest.',
+    '{1} sits down and rests.',
+    'You are already resting.')";
+
+                case "sleep":
+                    return
+@"-- ============================================================================
+-- Command: sleep
+-- Customize position change messages below!
+-- ============================================================================
+return Command.SetPosition(user, 'Sleeping',
+    'You lie down and go to sleep.',
+    '{1} lies down and goes to sleep.',
+    'You are already asleep.')";
+
+                case "look":
+                    return
+@"-- ============================================================================
+-- Command: look (alias: l)
+-- Syntax : look [target]
+-- ============================================================================
+if user.Command == nil or user.Command == '' then
+    user:Send(char:GenerateLookDescription(false))
+    return true
+end
+return Command.DoExamine(user)";
+
+                case "who":
+                    return
+@"-- ============================================================================
+-- Command: who
+-- Displays online players using Server Settings -> WhoFormat
+-- ============================================================================
+local filter = user:GetArgument()
+user:Send(settings.WhoFormat:ToString(filter, user))
+return true";
+
+                case "stats":
+                    return
+@"-- ============================================================================
+-- Command: stats (aliases: score, sc)
+-- Displays character sheet using Server Settings -> StatsFormat
+-- ============================================================================
+local filter = user:GetArgument()
+user:Send(settings.StatsFormat:ToString(filter, user))
+return true";
+
+                case "equipment":
+                    return
+@"-- ============================================================================
+-- Command: equipment (alias: eq)
+-- Displays equipped items using Server Settings -> EqFormat
+-- ============================================================================
+if char.Equipment.Count == 0 then
+    user:Send(""You aren't using anything."")
+    return true
+end
+user:Send(settings.EqFormat:ToString(user:GetArgument(), char))
+return true";
+
+                case "abilities":
+                    return
+@"-- ============================================================================
+-- Command: abilities (aliases: skills, spells)
+-- Displays learned abilities using Server Settings -> AbilitiesFormat
+-- ============================================================================
+if char.Abilities.Count < 1 then
+    user:Send('You have no abilities.')
+    return true
+end
+user:Send(settings.AbilitiesFormat:ToString(user:GetArgument(), user))
+return true";
+
+                case "say":
+                    return
+@"-- ============================================================================
+-- Command: say (alias: ')
+-- Syntax : say <message>
+-- Customize SAY_COLOR and speech formatting below!
+-- ============================================================================
+local SAY_COLOR = '{color:brightwhite}'
+
+local msg = user.Command
+user.Command = nil
+if msg == nil or msg == '' then
+    user:Send('Say what?')
+    return true
+end
+
+if Command.IsSilenced(user) then
+    user:Send('You are silenced.')
+    return true
+end
+
+Command.BroadcastRoom(user,
+    SAY_COLOR .. 'You say, ""' .. msg .. '""{color:reset}',
+    SAY_COLOR .. '{1} says, ""' .. msg .. '""{color:reset}',
+    true)
+return true";
+
+                case "chat":
+                    return
+@"-- ============================================================================
+-- Command: chat (alias: ooc)
+-- Syntax : chat <message>
+-- Customize CHAT_COLOR and TAG below!
+-- ============================================================================
+local CHAT_COLOR = '{color:brightcyan}'
+local CHAT_TAG   = '[CHAT]'
+
+local msg = user.Command
+user.Command = nil
+if msg == nil or msg == '' then
+    user:Send('Chat what?')
+    return true
+end
+
+if Command.IsSilenced(user) then
+    user:Send('You are silenced.')
+    return true
+end
+
+Command.BroadcastGlobal(user,
+    CHAT_COLOR .. CHAT_TAG .. ' You: ' .. msg .. '{color:reset}',
+    CHAT_COLOR .. CHAT_TAG .. ' ' .. char.Name .. ': ' .. msg .. '{color:reset}',
+    true)
+return true";
+
+                case "tell":
+                    return
+@"-- ============================================================================
+-- Command: tell
+-- Syntax : tell <player> <message>
+-- Customize TELL_COLOR and messages below!
+-- ============================================================================
+local TELL_COLOR = '{color:brightmagenta}'
+
+local targetName = user:GetArgument()
+local msg = user.Command
+user.Command = nil
+if targetName == nil or targetName == '' or msg == nil or msg == '' then
+    user:Send('Usage: tell <player> <message>')
+    return true
+end
+
+if Command.IsSilenced(user) then
+    user:Send('You are silenced.')
+    return true
+end
+
+local targetUser = Command.FindOnlineUser(targetName)
+if targetUser == nil then
+    user:Send('No player by that name is online.')
+    return true
+end
+
+if targetUser:IsIgnoring(char.Name) then
+    user:Send(targetUser.Character.Name .. ' is ignoring tells from you.')
+    return true
+end
+
+Command.RecordLastTell(targetUser, user)
+user:Send(TELL_COLOR .. 'You tell ' .. targetUser.Character.Name .. ', ""' .. msg .. '""{color:reset}')
+if targetUser.IsAfk then
+    local reason = ''
+    if targetUser.AfkMessage ~= nil and targetUser.AfkMessage ~= '' then
+        reason = ' (' .. targetUser.AfkMessage .. ')'
+    end
+    user:Send('{color:yellow}' .. targetUser.Character.Name .. ' is currently AFK' .. reason .. '.{color:reset}')
+end
+targetUser:Send(TELL_COLOR .. char.Name .. ' tells you, ""' .. msg .. '""{color:reset}')
+return true";
+
+                case "reply":
+                    return
+@"-- ============================================================================
+-- Command: reply
+-- Syntax : reply <message>
+-- ============================================================================
+local TELL_COLOR = '{color:brightmagenta}'
+
+local msg = user.Command
+user.Command = nil
+if msg == nil or msg == '' then
+    user:Send('Reply what?')
+    return true
+end
+
+local targetUser = Command.GetLastTellSender(user)
+if targetUser == nil then
+    user:Send('No one has sent you a tell recently.')
+    return true
+end
+
+if targetUser:IsIgnoring(char.Name) then
+    user:Send(targetUser.Character.Name .. ' is ignoring tells from you.')
+    return true
+end
+
+Command.RecordLastTell(targetUser, user)
+user:Send(TELL_COLOR .. 'You tell ' .. targetUser.Character.Name .. ', ""' .. msg .. '""{color:reset}')
+if targetUser.IsAfk then
+    local reason = ''
+    if targetUser.AfkMessage ~= nil and targetUser.AfkMessage ~= '' then
+        reason = ' (' .. targetUser.AfkMessage .. ')'
+    end
+    user:Send('{color:yellow}' .. targetUser.Character.Name .. ' is currently AFK' .. reason .. '.{color:reset}')
+end
+targetUser:Send(TELL_COLOR .. char.Name .. ' tells you, ""' .. msg .. '""{color:reset}')
+return true";
+
+                case "whisper":
+                    return
+@"-- ============================================================================
+-- Command: whisper
+-- Syntax : whisper <target> <message>
+-- ============================================================================
+local WHISPER_COLOR = '{color:magenta}'
+
+local targetName = user:GetArgument()
+local msg = user.Command
+user.Command = nil
+if targetName == nil or targetName == '' or msg == nil or msg == '' then
+    user:Send('Usage: whisper <target> <message>')
+    return true
+end
+
+local target = Command.FindCharacterInRoom(user, targetName)
+if target == nil then
+    user:Send(""They aren't here."")
+    return true
+end
+
+if target.User ~= nil and target.User:IsIgnoring(char.Name) then
+    user:Send(target.Name .. ' is ignoring you.')
+    return true
+end
+
+Command.BroadcastTargetRoom(user, target,
+    WHISPER_COLOR .. 'You whisper to {2}, ""' .. msg .. '""{color:reset}',
+    WHISPER_COLOR .. '{1} whispers to you, ""' .. msg .. '""{color:reset}',
+    '{1} whispers something quietly to {2}.',
+    true)
+return true";
+
+                case "emote":
+                    return
+@"-- ============================================================================
+-- Command: emote (alias: :)
+-- Syntax : emote <action>
+-- ============================================================================
+local msg = user.Command
+user.Command = nil
+if msg == nil or msg == '' then
+    user:Send('Emote what?')
+    return true
+end
+
+Command.BroadcastRoom(user, char.Name .. ' ' .. msg, '{1} ' .. msg, false)
+return true";
+
+                case "description":
+                    return
+@"-- ============================================================================
+-- Command: description (alias: desc)
+-- Syntax : description [text|clear]
+-- ============================================================================
+local desc = user.Command
+user.Command = nil
+if desc == nil or desc == '' then
+    if char.Description == nil or char.Description == '' then
+        user:Send('You have no character description set. Usage: description <text|clear>')
+    else
+        user:Send('Your description:\r\n' .. char.Description)
+    end
+    return true
+end
+
+local lower = string.lower(desc)
+if lower == 'clear' or lower == 'none' then
+    char.Description = ''
+    user:Send('Your description has been cleared.')
+else
+    char.Description = desc
+    user:Send('Your description has been updated.')
+end
+return true";
+
+                case "title":
+                    return
+@"-- ============================================================================
+-- Command: title
+-- Syntax : title [text|clear]
+-- ============================================================================
+local title = user.Command
+user.Command = nil
+if title == nil or title == '' then
+    if user.Title == nil or user.Title == '' then
+        user:Send('You have no title set. Usage: title <text|clear>')
+    else
+        user:Send('Your current title is: ' .. char.Name .. ' ' .. user.Title)
+    end
+    return true
+end
+
+local lower = string.lower(title)
+if lower == 'clear' or lower == 'none' then
+    user.Title = ''
+    user:Send('Your title has been cleared.')
+else
+    user.Title = title
+    user:Send('Your title is now: ' .. char.Name .. ' ' .. user.Title)
+end
+return true";
+
+                case "afk":
+                    return
+@"-- ============================================================================
+-- Command: afk
+-- Syntax : afk [reason]
+-- ============================================================================
+local msg = user.Command
+user.Command = nil
+if msg ~= nil and msg ~= '' then
+    user.IsAfk = true
+    user.AfkMessage = msg
+    user:Send('{color:yellow}You are now AFK (' .. user.AfkMessage .. ').{color:reset}')
+else
+    user.IsAfk = not user.IsAfk
+    if not user.IsAfk then
+        user.AfkMessage = ''
+        user:Send('{color:brightgreen}You are no longer AFK.{color:reset}')
+    else
+        user:Send('{color:yellow}You are now AFK.{color:reset}')
+    end
+end
+return true";
+
+                case "ignore":
+                    return
+@"-- ============================================================================
+-- Command: ignore
+-- Syntax : ignore [player]
+-- ============================================================================
+local target = user:GetArgument()
+return Command.ToggleIgnore(user, target)";
+
+                case "recall":
+                    return
+@"-- ============================================================================
+-- Command: recall (alias: home)
+-- Syntax : recall
+-- Customize ALLOW_IN_COMBAT, RECALL_COST, and messages below!
+-- ============================================================================
+local ALLOW_IN_COMBAT = false
+local RECALL_COST     = 0
+
+if not ALLOW_IN_COMBAT and char.FightSystem ~= nil then
+    user:Send(""You cannot recall while fighting! Use 'flee' instead."")
+    return true
+end
+
+local destArea = server.MainArea or char.Area
+if destArea == nil then
+    user:Send('There is nowhere to recall to.')
+    return true
+end
+
+if RECALL_COST > 0 then
+    if char.Value < RECALL_COST then
+        user:Send('You need $' .. RECALL_COST .. ' to recall.')
+        return true
+    end
+    char.Value = char.Value - RECALL_COST
+end
+
+if char.CurrentAction ~= nil then
+    char:Stop(true)
+end
+
+Command.BroadcastRoom(user, nil, '{1} disappears in a flash of bright light.', false)
+char.Location = Location(destArea, destArea.Start)
+user:Send('{color:brightcyan}You pray for recall and are transported back to safety!{color:reset}')
+Command.BroadcastRoom(user, nil, '{1} appears in a flash of bright light.', false)
+Command.DoLook(user)
+return true";
+
+                case "consider":
+                    return
+@"-- ============================================================================
+-- Command: consider (alias: con)
+-- Syntax : consider <target>
+-- Customize power ratio thresholds and difficulty messages below!
+-- ============================================================================
+local targetName = user:GetArgument()
+if targetName == nil or targetName == '' then
+    user:Send('Consider whom?')
+    return true
+end
+
+local target = Command.FindCharacterInRoom(user, targetName)
+if target == nil or target == char then
+    user:Send(""They aren't here."")
+    return true
+end
+
+local myPower = Command.CalculatePower(char)
+local theirPower = Command.CalculatePower(target)
+local ratio = 1.0
+if myPower > 0 then
+    ratio = theirPower / myPower
+end
+
+local verdict = ''
+if ratio < 0.5 then
+    verdict = '{color:brightgreen}You could defeat ' .. target.Name .. ' effortlessly.{color:reset}'
+elseif ratio < 0.85 then
+    verdict = '{color:green}' .. target.Name .. ' looks weaker than you.{color:reset}'
+elseif ratio <= 1.15 then
+    verdict = '{color:yellow}' .. target.Name .. ' looks like a fair and even match.{color:reset}'
+elseif ratio <= 1.6 then
+    verdict = '{color:brightred}' .. target.Name .. ' looks tough! Be careful.{color:reset}'
+else
+    verdict = '{color:red}' .. target.Name .. ' would crush you completely!{color:reset}'
+end
+
+user:Send('Considering ' .. target.Name .. ':\r\n' .. verdict)
+return true";
+
+                case "time":
+                    return
+@"-- ============================================================================
+-- Command: time
+-- Displays server date/time and uptime
+-- ============================================================================
+user:Send(Command.GetUptimeString())
+return true";
+
+                case "weather":
+                    return
+@"-- ============================================================================
+-- Command: weather
+-- Displays current weather in the character's area
+-- ============================================================================
+user:Send(Command.GetWeatherString(user))
+return true";
+
+                case "save":
+                    return
+@"-- ============================================================================
+-- Command: save
+-- Saves player character data to disk
+-- ============================================================================
+user:Save()
+user:Send('Character saved.')
+return true";
+
+                case "stop":
+                    return
+@"-- ============================================================================
+-- Command: stop
+-- Stops current movement or action
+-- ============================================================================
+char:Stop(false)
+return true";
+
+                case "announce":
+                    return
+@"-- ============================================================================
+-- Command: announce (aliases: gecho, broadcast) [ADMIN]
+-- Syntax : announce <message>
+-- Customize BANNER_PREFIX below!
+-- ============================================================================
+local BANNER_PREFIX = '{color:brightyellow}[ANNOUNCEMENT] '
+
+if not Command.RequireAdmin(user) then return true end
+
+local msg = user.Command
+user.Command = nil
+if msg == nil or msg == '' then
+    user:Send('Usage: announce <message>')
+    return true
+end
+
+local broadcast = BANNER_PREFIX .. char.Name .. ': ' .. msg .. '{color:reset}'
+user:Send(broadcast)
+server:Echo(broadcast, char)
+return true";
+
+                case "slay":
+                    return
+@"-- ============================================================================
+-- Command: slay (alias: smite) [ADMIN]
+-- Syntax : slay <target>
+-- Customize divine wrath messages below!
+-- ============================================================================
+if not Command.RequireAdmin(user) then return true end
+
+local targetName = user:GetArgument()
+if targetName == nil or targetName == '' then
+    user:Send('Usage: slay <target>')
+    return true
+end
+
+local target = Command.FindCharacterInRoom(user, targetName)
+if target == nil or target == char then
+    user:Send('Target not found here.')
+    return true
+end
+
+Command.BroadcastTargetRoom(user, target,
+    '{color:brightred}You call down divine wrath and slay {2} instantly!{color:reset}',
+    '{color:brightred}{1} calls down divine wrath and slays you instantly!{color:reset}',
+    '{color:brightred}{1} calls down divine wrath and slays {2} instantly!{color:reset}',
+    false)
+target:Die(char)
+return true";
+
+                case "silence":
+                    return
+@"-- ============================================================================
+-- Command: silence [ADMIN]
+-- Syntax : silence <player>
+-- ============================================================================
+if not Command.RequireAdmin(user) then return true end
+return Command.ToggleSilence(user, user:GetArgument())";
+
+                case "kick":
+                    return
+@"-- ============================================================================
+-- Command: kick (alias: disconnect) [ADMIN]
+-- Syntax : kick <player>
+-- ============================================================================
+if not Command.RequireAdmin(user) then return true end
+return Command.DisconnectUser(user, user:GetArgument())";
+
+                case "makeadmin":
+                    return
+@"-- ============================================================================
+-- Command: makeadmin (alias: advance) [ADMIN]
+-- Syntax : makeadmin <player>
+-- ============================================================================
+if not Command.RequireAdmin(user) then return true end
+return Command.ToggleAdmin(user, user:GetArgument())";
+
+                default:
+                    return
+@"-- ============================================================================
+-- Command: " + name + @"
+-- Pre-bound Lua globals:
+--   user     : Ultimud.User (current connected user)
+--   char     : Ultimud.Character (user.Character)
+--   area     : Ultimud.Area (char.Area)
+--   server   : Ultimud.Server (Server.Instance)
+--   settings : Ultimud.Settings (server.Settings)
+--   Command  : Ultimud.Command (built-in helper library)
+-- You can customize this script freely or add pre/post hooks around Command." + methodName + @"!
+-- ============================================================================
+finished = Command." + methodName + @"(user)
+return finished";
             }
         }
 
@@ -169,7 +959,7 @@ namespace Ultimud
             cmd.hidden_ = hidden;
             if (aliases != null && aliases.Length > 0)
                 cmd.aliases_.AddRange(aliases);
-            cmd.script_ = "luanet.load_assembly('Ultimud')\r\nCommand = luanet.import_type('Ultimud.Command')\r\nfinished = Command." + methodName + "(user)\r\nreturn finished";
+            cmd.script_ = GetDefaultLuaScript(name, methodName);
             cmd.Init();
             return cmd;
         }
@@ -206,14 +996,17 @@ namespace Ultimud
             // Communication
             list.Add(CreateDefaultCommand("who", "DoWho", true, 1, false, false));
             list.Add(CreateDefaultCommand("say", "DoSay", false, 1, false, false, "'"));
-            list.Add(CreateDefaultCommand("chat", "DoChat", true, 0, false, false, "ooc", "gossip"));
+            list.Add(CreateDefaultCommand("chat", "DoChat", true, 0, false, false, "ooc"));
             list.Add(CreateDefaultCommand("tell", "DoTell", true, 0, false, false));
             list.Add(CreateDefaultCommand("reply", "DoReply", true, 0, false, false));
             list.Add(CreateDefaultCommand("whisper", "DoWhisper", false, 0, false, false));
             list.Add(CreateDefaultCommand("emote", "DoEmote", false, 0, false, false, ":"));
+            list.Add(CreateDefaultCommand("gtell", "DoGroupTell", true, 0, false, false, "gsay"));
             list.Add(CreateDefaultCommand("channels", "DoChannels", true, 0, false, false));
             list.Add(CreateDefaultCommand("socials", "DoSocials", true, 0, false, false));
             list.Add(CreateDefaultCommand("forums", "DoForums", true, 0, false, false, "board", "boards"));
+            list.Add(CreateDefaultCommand("afk", "DoAfk", true, 0, false, false));
+            list.Add(CreateDefaultCommand("ignore", "DoIgnore", true, 0, false, false));
 
             // Character Info & Inventory
             list.Add(CreateDefaultCommand("stats", "DoStats", true, 1, false, false, "score", "sc"));
@@ -222,21 +1015,35 @@ namespace Ultimud
             list.Add(CreateDefaultCommand("abilities", "DoAbilities", true, 0, false, false, "skills", "spells"));
             list.Add(CreateDefaultCommand("status", "DoStatus", true, 0, false, false, "affects"));
             list.Add(CreateDefaultCommand("money", "DoMoney", true, 0, false, false, "gold"));
+            list.Add(CreateDefaultCommand("description", "DoDescription", true, 0, false, false, "desc"));
+            list.Add(CreateDefaultCommand("title", "DoTitle", true, 0, false, false));
 
-            // Items & Containers
+            // Combat, Tactical & Exploration
+            list.Add(CreateDefaultCommand("flee", "DoFlee", false, 0, false, false, "escape"));
+            list.Add(CreateDefaultCommand("recall", "DoRecall", false, 0, false, false, "home"));
+            list.Add(CreateDefaultCommand("consider", "DoConsider", false, 0, false, false, "con"));
+            list.Add(CreateDefaultCommand("scan", "DoScan", false, 0, false, false, "where", "scout"));
+            list.Add(CreateDefaultCommand("exits", "DoExits", true, 0, false, false));
+
+            // Items, Containers & Economy
             list.Add(CreateDefaultCommand("get", "DoGet", false, 1, false, false, "take", "pickup"));
             list.Add(CreateDefaultCommand("put", "DoPut", false, 0, false, false));
             list.Add(CreateDefaultCommand("drop", "DoDrop", false, 0, false, false));
-            list.Add(CreateDefaultCommand("use", "DoUse", false, 0, false, false, "wear", "wield", "equip", "eat"));
+            list.Add(CreateDefaultCommand("use", "DoUse", false, 0, false, false, "wear", "wield", "equip", "eat", "quaff", "drink"));
             list.Add(CreateDefaultCommand("remove", "DoRemove", false, 0, false, false, "unequip"));
             list.Add(CreateDefaultCommand("give", "DoGive", false, 0, false, false));
             list.Add(CreateDefaultCommand("givemoney", "DoGiveMoney", false, 0, false, false));
+            list.Add(CreateDefaultCommand("split", "DoSplit", false, 0, false, false));
             list.Add(CreateDefaultCommand("destroy", "DoDestroyItem", false, 0, false, false));
+            list.Add(CreateDefaultCommand("sacrifice", "DoSacrifice", false, 0, false, false, "junk"));
             list.Add(CreateDefaultCommand("examine", "DoExamine", false, 0, false, false, "exa", "lookat"));
             list.Add(CreateDefaultCommand("open", "DoOpen", false, 0, false, false));
             list.Add(CreateDefaultCommand("close", "DoClose", false, 0, false, false));
             list.Add(CreateDefaultCommand("lock", "DoLock", false, 0, false, false));
             list.Add(CreateDefaultCommand("unlock", "DoUnlock", false, 0, false, false));
+            list.Add(CreateDefaultCommand("bank", "DoBank", false, 0, false, false, "balance"));
+            list.Add(CreateDefaultCommand("deposit", "DoDeposit", false, 0, false, false));
+            list.Add(CreateDefaultCommand("withdraw", "DoWithdraw", false, 0, false, false));
 
             // Shops & Training
             list.Add(CreateDefaultCommand("list", "DoShopList", false, 0, false, false, "shop"));
@@ -259,6 +1066,21 @@ namespace Ultimud
             list.Add(CreateDefaultCommand("delete", "DoDelete", true, 0, false, false));
             list.Add(CreateDefaultCommand("quit", "DoQuit", true, 0, false, false));
 
+            // Administrator / Immortal Commands
+            list.Add(CreateDefaultCommand("wizhelp", "DoWizHelp", true, 0, false, true, "immhelp"));
+            list.Add(CreateDefaultCommand("goto", "DoGoto", true, 0, false, true, "teleport"));
+            list.Add(CreateDefaultCommand("transfer", "DoTransferPlayer", true, 0, false, true, "summon"));
+            list.Add(CreateDefaultCommand("slay", "DoSlay", true, 0, false, true, "smite"));
+            list.Add(CreateDefaultCommand("restore", "DoRestoreAdmin", true, 0, false, true, "healall"));
+            list.Add(CreateDefaultCommand("purge", "DoPurge", true, 0, false, true));
+            list.Add(CreateDefaultCommand("spawn", "DoSpawn", true, 0, false, true, "mload", "oload"));
+            list.Add(CreateDefaultCommand("announce", "DoAnnounce", true, 0, false, true, "gecho", "broadcast"));
+            list.Add(CreateDefaultCommand("wizstat", "DoWizStat", true, 0, false, true, "inspect"));
+            list.Add(CreateDefaultCommand("setstat", "DoSetStat", true, 0, false, true));
+            list.Add(CreateDefaultCommand("silence", "DoSilencePlayer", true, 0, false, true));
+            list.Add(CreateDefaultCommand("kick", "DoKickPlayer", true, 0, false, true, "disconnect"));
+            list.Add(CreateDefaultCommand("makeadmin", "DoMakeAdmin", true, 0, false, true, "advance"));
+
             // Script Commands
             list.Add(CreateDefaultCommand("peace", "DoPeace", true, 0, true, true));
             list.Add(CreateDefaultCommand("force", "DoForce", true, 0, true, true));
@@ -276,13 +1098,31 @@ namespace Ultimud
 
             foreach (Command c in list)
             {
-                commands_.Add(c);
-                try
+                Command existing = commands_.Find(delegate(Command ex)
                 {
-                    if (!string.IsNullOrEmpty(saveDir))
-                        Damdai.Serialization.Xml.Serialize(c, saveDir + "\\" + c.name_ + ".cmd");
+                    return ex.Name != null && ex.Name.Equals(c.name_, StringComparison.OrdinalIgnoreCase);
+                });
+                if (existing == null)
+                {
+                    commands_.Add(c);
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(saveDir))
+                            Damdai.Serialization.Xml.Serialize(c, saveDir + "\\" + c.name_ + ".cmd");
+                    }
+                    catch { }
                 }
-                catch { }
+                else if (IsLegacyStubScript(existing.script_))
+                {
+                    existing.script_ = c.script_;
+                    existing.Init();
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(saveDir))
+                            Damdai.Serialization.Xml.Serialize(existing, saveDir + "\\" + existing.name_ + ".cmd");
+                    }
+                    catch { }
+                }
             }
         }
 
@@ -341,6 +1181,12 @@ namespace Ultimud
                     try
                     {
                         this.lua_["user"] = user;
+                        this.lua_["char"] = user != null ? user.Character : null;
+                        this.lua_["ch"] = user != null ? user.Character : null;
+                        this.lua_["actor"] = user != null ? user.Character : null;
+                        this.lua_["server"] = Server.Instance;
+                        this.lua_["area"] = (user != null && user.Character != null) ? user.Character.Area : null;
+                        this.lua_["settings"] = Server.Instance != null ? Server.Instance.Settings : null;
                         this.lua_["finished"] = null;
                         object[] rvals = this.lua_.DoString(this.script_);
                         object fin = this.lua_["finished"];
@@ -410,8 +1256,296 @@ namespace Ultimud
                         list.Add(menufn.Handler);
                 this.menuhandlers_ = list.ToArray();
                 this.lua_ = new Lua();
+                try
+                {
+                    this.lua_.DoString(
+                        "luanet.load_assembly('System')\r\n" +
+                        "luanet.load_assembly('System.Drawing')\r\n" +
+                        "luanet.load_assembly('Damdai')\r\n" +
+                        "luanet.load_assembly('Ultimud')\r\n" +
+                        "Command = luanet.import_type('Ultimud.Command')\r\n" +
+                        "Server = luanet.import_type('Ultimud.Server')\r\n" +
+                        "String = luanet.import_type('Ultimud.String')\r\n" +
+                        "StringTable = luanet.import_type('Ultimud.StringTable')\r\n" +
+                        "Area = luanet.import_type('Ultimud.Area')\r\n" +
+                        "Location = luanet.import_type('Ultimud.Location')\r\n" +
+                        "Object = luanet.import_type('Ultimud.Object')\r\n" +
+                        "Character = luanet.import_type('Ultimud.Character')\r\n" +
+                        "Npc = luanet.import_type('Ultimud.Npc')\r\n" +
+                        "Player = luanet.import_type('Ultimud.Player')\r\n" +
+                        "Item = luanet.import_type('Ultimud.Item')\r\n" +
+                        "Shop = luanet.import_type('Ultimud.Shop')\r\n" +
+                        "Help = luanet.import_type('Ultimud.Help')\r\n" +
+                        "Point = luanet.import_type('System.Drawing.Point')");
+                }
+                catch { }
             }
         }
+
+        #region Lua Scripting Helper API
+        public static int ToInt(string str, int defaultValue)
+        {
+            if (string.IsNullOrEmpty(str))
+                return defaultValue;
+            int val;
+            if (int.TryParse(str.Trim().TrimStart('$'), out val))
+                return val;
+            return defaultValue;
+        }
+
+        public static string FormatNumber(long value)
+        {
+            string fmt = (Server.Instance != null && Server.Instance.Settings != null && !string.IsNullOrEmpty(Server.Instance.Settings.NumberFormat))
+                ? Server.Instance.Settings.NumberFormat
+                : "N0";
+            return value.ToString(fmt);
+        }
+
+        public static Shop GetShop(User user)
+        {
+            if (user == null || user.Character == null)
+                return null;
+            List<Shop> shops = user.Character.NearbyObjects<Shop>(0, true);
+            return (shops != null && shops.Count > 0) ? shops[0] : null;
+        }
+
+        public static Item FindItemHereOrInv(User user, string name)
+        {
+            if (user == null || user.Character == null || string.IsNullOrEmpty(name))
+                return null;
+            return user.Character.FindNearby<Item>(name, 0, true) ?? user.Character.FindItemInInventory(name);
+        }
+
+        public static Character FindCharacterInRoom(User user, string name)
+        {
+            if (user == null || user.Character == null || string.IsNullOrEmpty(name))
+                return null;
+            return user.Character.FindNearby<Character>(name, 0, true);
+        }
+
+        public static bool IsSilenced(User user)
+        {
+            return user != null && user.Flags.Get((int)User.UserFlags.Silenced);
+        }
+
+        public static bool MoveDir(User user, string dirName, string selfLeaveMsg, string roomLeaveMsg, string roomArriveMsg)
+        {
+            if (user == null || user.Character == null)
+                return true;
+            Area.Direction dir = (Area.Direction)Enum.Parse(typeof(Area.Direction), dirName, true);
+            if (user.Character.Position != Object.Positions.Stopped &&
+                user.Character.Position != Object.Positions.Moving)
+            {
+                user.Send("You must stand up first!");
+                return true;
+            }
+
+            if (user.Character.CurrentAction != null)
+                user.Character.Stop(false);
+
+            bool moved = user.Character.Move(
+                dir,
+                new String(selfLeaveMsg ?? "You move {dir}.", null, null, null, roomLeaveMsg ?? "{1} leaves {dir}.", null),
+                new String(null, null, null, null, roomArriveMsg ?? "{1} arrives from the {dir}.", null),
+                false);
+
+            if (!moved)
+                user.Send("You cannot move " + dir.ToString().ToLower() + ".");
+            else
+                user.Send(user.Character.GenerateLookDescription(!user.Flags.Get((int)User.UserFlags.AutoMap)));
+            return true;
+        }
+
+        public static bool SetPosition(User user, string posName, string selfMsg, string roomMsg, string alreadyMsg)
+        {
+            if (user == null || user.Character == null)
+                return true;
+            if (user.Character.Position < Object.Positions.Sleeping)
+            {
+                user.Send("You can't do that in your current state.");
+                return true;
+            }
+            Object.Positions targetPos = (Object.Positions)Enum.Parse(typeof(Object.Positions), posName, true);
+            if (user.Character.Position == targetPos)
+            {
+                user.Send(alreadyMsg);
+                return true;
+            }
+            if (targetPos != Object.Positions.Stopped)
+                user.Character.Stop(true);
+            user.Character.Position = targetPos;
+            if (user.Character.Area != null)
+                user.Character.Area.Send(new String(selfMsg, null, null, null, roomMsg, null), user.Character, null, 0);
+            return true;
+        }
+
+        public static void BroadcastRoom(User user, string selfMsg, string roomMsg, bool mustHear)
+        {
+            if (user == null || user.Character == null || user.Character.Area == null)
+                return;
+            String str = new String(selfMsg, null, null, null, roomMsg, null);
+            if (mustHear)
+                user.Character.Area.Send(str, user.Character, null, 0, new Damdai.Function<bool, IObject>[] { Object.CanHear });
+            else
+                user.Character.Area.Send(str, user.Character, null, 0);
+        }
+
+        public static void BroadcastTargetRoom(User user, Character target, string selfMsg, string targetMsg, string roomMsg, bool mustHear)
+        {
+            if (user == null || user.Character == null || user.Character.Area == null || target == null)
+                return;
+            String str = new String(selfMsg, selfMsg, targetMsg, targetMsg, roomMsg, null);
+            if (mustHear)
+                user.Character.Area.Send(str, user.Character, target, 0, new Damdai.Function<bool, IObject>[] { Object.CanHear });
+            else
+                user.Character.Area.Send(str, user.Character, target, 0);
+        }
+
+        public static void BroadcastGlobal(User user, string selfMsg, string globalMsg, bool respectIgnore)
+        {
+            if (user == null || Server.Instance == null)
+                return;
+            if (!string.IsNullOrEmpty(selfMsg))
+                user.Send(selfMsg);
+            foreach (User u in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
+            {
+                if (u != null && u != user && u.Flags.Get((int)User.UserFlags.LoggedIn) && u.Character != null)
+                {
+                    if (respectIgnore && user.Character != null && u.IsIgnoring(user.Character.Name))
+                        continue;
+                    u.Send(globalMsg);
+                }
+            }
+        }
+
+        public static void RecordLastTell(User targetUser, User senderUser)
+        {
+            if (targetUser == null || senderUser == null)
+                return;
+            lock (lastTellFrom_)
+                lastTellFrom_[targetUser.Id] = senderUser.Id;
+        }
+
+        public static User GetLastTellSender(User user)
+        {
+            if (user == null || Server.Instance == null)
+                return null;
+            Guid senderId = Guid.Empty;
+            lock (lastTellFrom_)
+                lastTellFrom_.TryGetValue(user.Id, out senderId);
+            if (senderId == Guid.Empty)
+                return null;
+            foreach (User u in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
+            {
+                if (u != null && u.Id == senderId && u.Flags.Get((int)User.UserFlags.LoggedIn) && u.Character != null)
+                    return u;
+            }
+            return null;
+        }
+
+        public static long CalculatePower(Character ch)
+        {
+            if (ch == null || ch.Stats == null)
+                return 0;
+            long power = 0;
+            foreach (Stat s in ch.Stats.Values)
+                power += s.Max;
+            return power;
+        }
+
+        public static string GetUptimeString()
+        {
+            TimeSpan uptime = DateTime.Now - (Server.Instance != null ? Server.Instance.StartTime : DateTime.Now);
+            return "Server Time: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") +
+                "\r\nUptime:      " + (int)uptime.TotalHours + "h " + uptime.Minutes + "m " + uptime.Seconds + "s";
+        }
+
+        public static string GetWeatherString(User user)
+        {
+            if (user == null || user.Character == null || user.Character.Area == null)
+                return "You cannot tell the weather here.";
+            Area area = user.Character.Area;
+            Area.Layer layer = user.Character.OnLayer;
+            string weather = (layer != null && !Damdai.Collections.Util.IsEmpty(layer.WeatherConditions.PossibleConditions)
+                ? layer.WeatherConditions.ToString()
+                : area.WeatherConditions.ToString());
+            return "Current weather in " + area.Name + ": " + weather;
+        }
+
+        public static bool ToggleIgnore(User user, string target)
+        {
+            if (string.IsNullOrEmpty(target))
+            {
+                if (user.IgnoredUsers.Count == 0)
+                    user.Send("You are not ignoring anyone.");
+                else
+                    user.Send("Ignored players: " + string.Join(", ", user.IgnoredUsers.ToArray()));
+                return true;
+            }
+            user.Command = target;
+            return DoIgnore(user);
+        }
+
+        public static bool ToggleSilence(User user, string targetName)
+        {
+            user.Command = targetName;
+            return DoSilencePlayer(user);
+        }
+
+        public static bool DisconnectUser(User user, string targetName)
+        {
+            user.Command = targetName;
+            return DoKickPlayer(user);
+        }
+
+        public static bool ToggleAdmin(User user, string targetName)
+        {
+            user.Command = targetName;
+            return DoMakeAdmin(user);
+        }
+
+        public static long ModifyStat(Character ch, string statName, long delta)
+        {
+            if (ch == null || string.IsNullOrEmpty(statName))
+                return 0;
+            Stat stat = ch.GetStat(statName);
+            if (stat == null)
+                return 0;
+            long nextVal = stat.Current + delta;
+            if (nextVal < 0)
+                nextVal = 0;
+            if (nextVal > stat.Max)
+                nextVal = stat.Max;
+            stat.Current = nextVal;
+            return stat.Current;
+        }
+
+        public static Item GiveItemBlueprint(Character ch, string itemName)
+        {
+            if (ch == null || string.IsNullOrEmpty(itemName) || Server.Instance == null)
+                return null;
+            Item bp = Server.Instance.Get<Item>(itemName);
+            if (bp == null)
+                return null;
+            Item item = Item.Create(bp);
+            if (item != null)
+                item.Parent = ch;
+            return item;
+        }
+
+        public static Npc SpawnNpcBlueprint(Character ch, string npcName)
+        {
+            if (ch == null || string.IsNullOrEmpty(npcName) || Server.Instance == null)
+                return null;
+            Npc bp = Server.Instance.Get<Npc>(npcName);
+            if (bp == null)
+                return null;
+            Npc npc = Npc.Create(bp);
+            if (npc != null)
+                npc.Location = ch.Location;
+            return npc;
+        }
+        #endregion
 
         #region Built-In Command Implementations
         public static bool DoLook(User user)
@@ -877,7 +2011,11 @@ namespace Ultimud
                 return true;
             }
             user.Send("{color:brightcyan}[CHAT] You: " + msg + "{color:reset}");
-            Server.Instance.Echo("{color:brightcyan}[CHAT] " + user.Character.Name + ": " + msg + "{color:reset}", user.Character);
+            foreach (User u in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
+            {
+                if (u != null && u != user && u.Flags.Get((int)User.UserFlags.LoggedIn) && u.Character != null && !u.IsIgnoring(user.Character.Name))
+                    u.Send("{color:brightcyan}[CHAT] " + user.Character.Name + ": " + msg + "{color:reset}");
+            }
             return true;
         }
 
@@ -913,11 +2051,18 @@ namespace Ultimud
                 user.Send("No player by that name is online.");
                 return true;
             }
+            if (targetUser.IsIgnoring(user.Character.Name))
+            {
+                user.Send(targetUser.Character.Name + " is ignoring tells from you.");
+                return true;
+            }
 
             lock (lastTellFrom_)
                 lastTellFrom_[targetUser.Id] = user.Id;
 
             user.Send("{color:brightmagenta}You tell " + targetUser.Character.Name + ", \"" + msg + "\"{color:reset}");
+            if (targetUser.IsAfk)
+                user.Send("{color:yellow}" + targetUser.Character.Name + " is currently AFK" + (!string.IsNullOrEmpty(targetUser.AfkMessage) ? " (" + targetUser.AfkMessage + ")" : "") + ".{color:reset}");
             targetUser.Send("{color:brightmagenta}" + user.Character.Name + " tells you, \"" + msg + "\"{color:reset}");
             return true;
         }
@@ -957,11 +2102,18 @@ namespace Ultimud
                 user.Send("They are no longer online.");
                 return true;
             }
+            if (targetUser.IsIgnoring(user.Character.Name))
+            {
+                user.Send(targetUser.Character.Name + " is ignoring tells from you.");
+                return true;
+            }
 
             lock (lastTellFrom_)
                 lastTellFrom_[targetUser.Id] = user.Id;
 
             user.Send("{color:brightmagenta}You tell " + targetUser.Character.Name + ", \"" + msg + "\"{color:reset}");
+            if (targetUser.IsAfk)
+                user.Send("{color:yellow}" + targetUser.Character.Name + " is currently AFK" + (!string.IsNullOrEmpty(targetUser.AfkMessage) ? " (" + targetUser.AfkMessage + ")" : "") + ".{color:reset}");
             targetUser.Send("{color:brightmagenta}" + user.Character.Name + " tells you, \"" + msg + "\"{color:reset}");
             return true;
         }
@@ -981,6 +2133,11 @@ namespace Ultimud
             if (target == null)
             {
                 user.Send("They aren't here.");
+                return true;
+            }
+            if (target.User != null && target.User.IsIgnoring(user.Character.Name))
+            {
+                user.Send(target.Name + " is ignoring you.");
                 return true;
             }
 
@@ -1931,6 +3088,994 @@ namespace Ultimud
                         npc.Location = user.Character.Location;
                 }
             }
+            return true;
+        }
+
+        // Player QoL, Combat, Economy & Social Commands
+        public static bool DoFlee(User user)
+        {
+            if (user.Character.FightSystem == null)
+            {
+                user.Send("You aren't fighting anyone!");
+                return true;
+            }
+
+            List<Area.Direction> validDirs = new List<Area.Direction>();
+            if (user.Character.Area != null)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    Area.Direction dir = (Area.Direction)i;
+                    System.Drawing.Point dest = Area.GetNextPoint(user.Character.Location.Point, dir);
+                    if (user.Character.CanMove(dest, false))
+                        validDirs.Add(dir);
+                }
+            }
+
+            user.Character.FightSystem.Finish("Fled from combat.");
+            if (user.Character.CurrentAction != null)
+                user.Character.Stop(false);
+
+            if (validDirs.Count > 0)
+            {
+                Area.Direction chosen = validDirs[Server.RandomNumber.Next(validDirs.Count)];
+                string dirStr = chosen.ToString().ToLower();
+                String leaveMsg = new String(
+                    "{color:yellow}You flee " + dirStr + " from combat!{color:reset}", null,
+                    null, null,
+                    "{1} flees " + dirStr + " from combat!", null);
+                String arriveMsg = new String(null, null, null, null, "{1} arrives in a panic.", null);
+                user.Character.Move(chosen, leaveMsg, arriveMsg, false);
+                DoLook(user);
+            }
+            else
+            {
+                user.Send("{color:yellow}You panic and disengage from combat!{color:reset}");
+            }
+            return true;
+        }
+
+        public static bool DoRecall(User user)
+        {
+            if (user.Character.FightSystem != null)
+            {
+                user.Send("You cannot recall while fighting! Use 'flee' instead.");
+                return true;
+            }
+
+            Area destArea = Server.Instance.MainArea ?? user.Character.Area;
+            if (destArea == null)
+            {
+                user.Send("There is nowhere to recall to.");
+                return true;
+            }
+
+            if (user.Character.CurrentAction != null)
+                user.Character.Stop(true);
+
+            if (user.Character.Area != null)
+            {
+                user.Character.Area.Send(
+                    new String(null, null, null, null, "{1} disappears in a flash of bright light.", null),
+                    user.Character, null, 0);
+            }
+
+            user.Character.Location = new Location(destArea, destArea.Start);
+            user.Send("{color:brightcyan}You pray for recall and are transported back to safety!{color:reset}");
+            destArea.Send(
+                new String(null, null, null, null, "{1} appears in a flash of bright light.", null),
+                user.Character, null, 0);
+            DoLook(user);
+            return true;
+        }
+
+        public static bool DoConsider(User user)
+        {
+            string targetName = user.GetArgument();
+            if (string.IsNullOrEmpty(targetName))
+            {
+                user.Send("Consider whom?");
+                return true;
+            }
+
+            Character target = user.Character.FindNearby<Character>(targetName, 0, true);
+            if (target == null || target == user.Character)
+            {
+                user.Send("They aren't here.");
+                return true;
+            }
+
+            long myPower = 0;
+            foreach (Stat s in user.Character.Stats.Values)
+                myPower += s.Max;
+            long theirPower = 0;
+            foreach (Stat s in target.Stats.Values)
+                theirPower += s.Max;
+
+            double ratio = (myPower > 0) ? ((double)theirPower / (double)myPower) : 1.0;
+            string verdict;
+            if (ratio < 0.5)
+                verdict = "{color:brightgreen}You could defeat " + target.Name + " effortlessly.{color:reset}";
+            else if (ratio < 0.85)
+                verdict = "{color:green}" + String.Capitalize(target.Name) + " looks weaker than you.{color:reset}";
+            else if (ratio <= 1.15)
+                verdict = "{color:yellow}" + String.Capitalize(target.Name) + " looks like a fair and even match.{color:reset}";
+            else if (ratio <= 1.6)
+                verdict = "{color:brightred}" + String.Capitalize(target.Name) + " looks tough! Be careful.{color:reset}";
+            else
+                verdict = "{color:red}" + String.Capitalize(target.Name) + " would crush you completely!{color:reset}";
+
+            user.Send("Considering " + target.Name + ":\r\n" + verdict);
+            return true;
+        }
+
+        public static bool DoScan(User user)
+        {
+            if (user.Character.Area == null)
+            {
+                user.Send("You see nothing nearby.");
+                return true;
+            }
+
+            List<Object> nearby = user.Character.NearbyObjects<Object>((int)Area.Range.Nearby, true, user.Character);
+            StringTable table = new StringTable("Object", "Type", "Direction", "Distance");
+            table.Columns[3].Alignment = StringTable.Column.Align.Right;
+            int count = 0;
+            foreach (Object o in nearby)
+            {
+                if (o == null || o == user.Character || o is Area.Layer)
+                    continue;
+                int dist = user.Character.Distance(o);
+                string dir = (dist == 0)
+                    ? "here"
+                    : user.Character.GetDirection(o.Location.Point).ToString().ToLower();
+                string typeName = (o is Npc) ? "NPC" : (o is Character) ? "Player" : (o is IPortal) ? "Portal" : (o is Shop) ? "Shop" : (o is Item) ? "Item" : "Object";
+                table.AddRow(o.Name, typeName, dir, dist.ToString());
+                count++;
+            }
+
+            if (count == 0)
+                user.Send("You scan the surroundings and see nothing of note nearby.");
+            else
+                user.Send("Nearby surroundings:\r\n" + table.ToString());
+            return true;
+        }
+
+        public static bool DoExits(User user)
+        {
+            if (user.Character.Area == null)
+            {
+                user.Send("Obvious exits: none.");
+                return true;
+            }
+
+            List<string> exits = new List<string>();
+            for (int i = 0; i < 8; i++)
+            {
+                Area.Direction dir = (Area.Direction)i;
+                System.Drawing.Point pt = Area.GetNextPoint(user.Character.Location.Point, dir);
+                if (user.Character.CanMove(pt, false))
+                {
+                    Area.Layer layer = user.Character.Area.GetLayer<Area.Layer>(pt, false);
+                    string terrain = (layer != null && !string.IsNullOrEmpty(layer.Name)) ? (" (" + layer.Name + ")") : string.Empty;
+                    exits.Add(dir.ToString().ToLower() + terrain);
+                }
+            }
+
+            List<IPortal> portals = user.Character.NearbyObjects<IPortal>(0, true);
+            foreach (IPortal p in portals)
+            {
+                if (!string.IsNullOrEmpty(p.Name))
+                    exits.Add("enter " + p.Name);
+            }
+
+            if (exits.Count == 0)
+                user.Send("Obvious exits: none.");
+            else
+                user.Send("{color:brightcyan}Obvious exits:{color:reset} " + string.Join(", ", exits.ToArray()));
+            return true;
+        }
+
+        public static bool DoGroupTell(User user)
+        {
+            string msg = user.Command;
+            user.Command = null;
+            if (string.IsNullOrEmpty(msg))
+            {
+                user.Send("Tell your group what?");
+                return true;
+            }
+
+            Character leader = user.Character.Master ?? user.Character;
+            List<Character> members = new List<Character>();
+            members.Add(leader);
+            if (user.Character.Area != null)
+            {
+                foreach (Character f in user.Character.Area.GetChildren<Character>())
+                {
+                    if (f != null && f != leader && f.Master == leader && !members.Contains(f))
+                        members.Add(f);
+                }
+            }
+
+            if (members.Count <= 1 && user.Character.Master == null)
+            {
+                user.Send("You are not in a group.");
+                return true;
+            }
+
+            string formatted = "{color:brightgreen}[GROUP] " + user.Character.Name + ": " + msg + "{color:reset}";
+            foreach (Character m in members)
+                m.Send(formatted);
+            return true;
+        }
+
+        public static bool DoSplit(User user)
+        {
+            string arg = user.GetArgument();
+            int amount;
+            if (string.IsNullOrEmpty(arg) || !int.TryParse(arg.TrimStart('$'), out amount) || amount <= 0)
+            {
+                user.Send("Usage: split <amount>");
+                return true;
+            }
+            if (amount > user.Character.Value)
+            {
+                user.Send("You don't have that much gold.");
+                return true;
+            }
+
+            Character leader = user.Character.Master ?? user.Character;
+            List<Character> localMembers = new List<Character>();
+            if (leader.Area == user.Character.Area && leader.Distance(user.Character) == 0)
+                localMembers.Add(leader);
+            if (user.Character.Area != null)
+            {
+                foreach (Character f in user.Character.Area.GetChildren<Character>())
+                {
+                    if (f != null && f != leader && f.Master == leader && f.Area == user.Character.Area && f.Distance(user.Character) == 0 && !localMembers.Contains(f))
+                        localMembers.Add(f);
+                }
+            }
+
+            if (localMembers.Count <= 1)
+            {
+                user.Send("There is no one in your group here to split money with.");
+                return true;
+            }
+
+            int share = amount / localMembers.Count;
+            int remainder = amount - (share * localMembers.Count);
+            user.Character.Value -= amount;
+            user.Character.Value += remainder;
+
+            foreach (Character m in localMembers)
+            {
+                m.Value += share;
+                if (m == user.Character)
+                    m.Send("You split $" + amount + " among " + localMembers.Count + " group members (your share: $" + (share + remainder) + ").");
+                else
+                    m.Send(user.Character.Name + " splits $" + amount + "; your share is $" + share + ".");
+            }
+            return true;
+        }
+
+        public static bool DoBank(User user)
+        {
+            string sub = user.GetArgument();
+            if (!string.IsNullOrEmpty(sub))
+            {
+                if (sub.Equals("deposit", StringComparison.OrdinalIgnoreCase))
+                    return DoDeposit(user);
+                if (sub.Equals("withdraw", StringComparison.OrdinalIgnoreCase))
+                    return DoWithdraw(user);
+            }
+
+            string numFmt = Server.Instance.Settings.NumberFormat;
+            user.Send("{color:brightyellow}=== Royal Bank Statement ==={color:reset}\r\n" +
+                      "Gold on Hand: $" + user.Character.Value.ToString(numFmt) + "\r\n" +
+                      "Bank Balance: $" + user.BankBalance.ToString(numFmt));
+            return true;
+        }
+
+        public static bool DoDeposit(User user)
+        {
+            string arg = user.GetArgument();
+            if (string.IsNullOrEmpty(arg))
+            {
+                user.Send("Usage: deposit <amount|all>");
+                return true;
+            }
+
+            int amount;
+            if (arg.Equals("all", StringComparison.OrdinalIgnoreCase))
+                amount = user.Character.Value;
+            else if (!int.TryParse(arg.TrimStart('$'), out amount) || amount <= 0)
+            {
+                user.Send("Please specify a valid positive amount to deposit.");
+                return true;
+            }
+
+            if (amount <= 0 || amount > user.Character.Value)
+            {
+                user.Send("You don't have that much gold on hand.");
+                return true;
+            }
+
+            user.Character.Value -= amount;
+            user.BankBalance += amount;
+            string numFmt = Server.Instance.Settings.NumberFormat;
+            user.Send("You deposit $" + amount.ToString(numFmt) + ". New bank balance: $" + user.BankBalance.ToString(numFmt) + ".");
+            return true;
+        }
+
+        public static bool DoWithdraw(User user)
+        {
+            string arg = user.GetArgument();
+            if (string.IsNullOrEmpty(arg))
+            {
+                user.Send("Usage: withdraw <amount|all>");
+                return true;
+            }
+
+            int amount;
+            if (arg.Equals("all", StringComparison.OrdinalIgnoreCase))
+                amount = user.BankBalance;
+            else if (!int.TryParse(arg.TrimStart('$'), out amount) || amount <= 0)
+            {
+                user.Send("Please specify a valid positive amount to withdraw.");
+                return true;
+            }
+
+            if (amount <= 0 || amount > user.BankBalance)
+            {
+                user.Send("You don't have that much gold in your bank account.");
+                return true;
+            }
+
+            user.BankBalance -= amount;
+            user.Character.Value += amount;
+            string numFmt = Server.Instance.Settings.NumberFormat;
+            user.Send("You withdraw $" + amount.ToString(numFmt) + ". Remaining bank balance: $" + user.BankBalance.ToString(numFmt) + ".");
+            return true;
+        }
+
+        public static bool DoSacrifice(User user)
+        {
+            string arg = user.GetArgument();
+            if (string.IsNullOrEmpty(arg))
+            {
+                user.Send("Sacrifice what?");
+                return true;
+            }
+
+            Item item = user.Character.FindNearby<Item>(arg, 0, true) ?? user.Character.FindItemInInventory(arg);
+            if (item == null)
+            {
+                user.Send("You don't see that item here.");
+                return true;
+            }
+
+            int reward = Math.Max(1, Math.Min(10, item.Value / 10 + 1));
+            string itemName = item.Name;
+            item.Parent = null;
+            user.Character.Value += reward;
+            user.Send("You sacrifice " + itemName + " and receive $" + reward + ".");
+            return true;
+        }
+
+        public static bool DoDescription(User user)
+        {
+            string desc = user.Command;
+            user.Command = null;
+            if (string.IsNullOrEmpty(desc))
+            {
+                if (string.IsNullOrEmpty(user.Character.Description))
+                    user.Send("You have no character description set. Usage: description <text|clear>");
+                else
+                    user.Send("Your description:\r\n" + user.Character.Description);
+                return true;
+            }
+
+            if (desc.Equals("clear", StringComparison.OrdinalIgnoreCase) || desc.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                user.Character.Description = string.Empty;
+                user.Send("Your description has been cleared.");
+            }
+            else
+            {
+                user.Character.Description = desc;
+                user.Send("Your description has been updated.");
+            }
+            return true;
+        }
+
+        public static bool DoTitle(User user)
+        {
+            string title = user.Command;
+            user.Command = null;
+            if (string.IsNullOrEmpty(title))
+            {
+                if (string.IsNullOrEmpty(user.Title))
+                    user.Send("You have no title set. Usage: title <text|clear>");
+                else
+                    user.Send("Your current title is: " + user.Character.Name + " " + user.Title);
+                return true;
+            }
+
+            if (title.Equals("clear", StringComparison.OrdinalIgnoreCase) || title.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                user.Title = string.Empty;
+                user.Send("Your title has been cleared.");
+            }
+            else
+            {
+                user.Title = title.Trim();
+                user.Send("Your title is now: " + user.Character.Name + " " + user.Title);
+            }
+            return true;
+        }
+
+        public static bool DoAfk(User user)
+        {
+            string msg = user.Command;
+            user.Command = null;
+            if (!string.IsNullOrEmpty(msg))
+            {
+                user.IsAfk = true;
+                user.AfkMessage = msg.Trim();
+                user.Send("{color:yellow}You are now AFK (" + user.AfkMessage + ").{color:reset}");
+            }
+            else
+            {
+                user.IsAfk = !user.IsAfk;
+                if (!user.IsAfk)
+                {
+                    user.AfkMessage = string.Empty;
+                    user.Send("{color:brightgreen}You are no longer AFK.{color:reset}");
+                }
+                else
+                {
+                    user.Send("{color:yellow}You are now AFK.{color:reset}");
+                }
+            }
+            return true;
+        }
+
+        public static bool DoIgnore(User user)
+        {
+            string target = user.GetArgument();
+            if (string.IsNullOrEmpty(target))
+            {
+                if (user.IgnoredUsers.Count == 0)
+                    user.Send("You are not ignoring anyone.");
+                else
+                    user.Send("Ignored players: " + string.Join(", ", user.IgnoredUsers.ToArray()));
+                return true;
+            }
+
+            int idx = user.IgnoredUsers.FindIndex(delegate(string s)
+            {
+                return s.Equals(target, StringComparison.OrdinalIgnoreCase);
+            });
+
+            if (idx >= 0)
+            {
+                string removed = user.IgnoredUsers[idx];
+                user.IgnoredUsers.RemoveAt(idx);
+                user.Send("You are no longer ignoring " + removed + ".");
+            }
+            else
+            {
+                user.IgnoredUsers.Add(target);
+                user.Send("You are now ignoring " + target + ".");
+            }
+            return true;
+        }
+
+        // Administrator / Immortal Commands
+        public static bool RequireAdmin(User user)
+        {
+            if (user == null || !user.Flags.Get((int)User.UserFlags.Administrator))
+            {
+                if (user != null)
+                    user.Send("You do not have administrator privileges.");
+                return false;
+            }
+            return true;
+        }
+
+        public static User FindOnlineUser(string name)
+        {
+            if (string.IsNullOrEmpty(name) || Server.Instance == null)
+                return null;
+            foreach (User u in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
+            {
+                if (u != null && u.Character != null && u.Character.Name != null &&
+                    u.Character.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                    return u;
+            }
+            return null;
+        }
+
+        public static bool DoWizHelp(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            StringTable table = new StringTable("Command", "Syntax", "Description");
+            table.AddRow("wizhelp", "wizhelp", "List all administrator commands");
+            table.AddRow("goto", "goto <target|x y>", "Teleport to a player, NPC, area, or coordinates");
+            table.AddRow("transfer", "transfer <target>", "Summon a player or NPC to your location");
+            table.AddRow("slay", "slay <target>", "Instantly slay a target character or NPC");
+            table.AddRow("restore", "restore [target|all]", "Restore full stats and clear status effects");
+            table.AddRow("purge", "purge [target]", "Remove non-player objects in the room");
+            table.AddRow("spawn", "spawn <npc|item> <name>", "Spawn an NPC or Item from blueprint");
+            table.AddRow("announce", "announce <message>", "Broadcast a global server announcement");
+            table.AddRow("wizstat", "wizstat [target]", "Inspect detailed stats and flags of an object");
+            table.AddRow("setstat", "setstat <target> <stat> <val>", "Set a target's stat, money, or bank balance");
+            table.AddRow("silence", "silence <player>", "Toggle silence on a player");
+            table.AddRow("kick", "kick <player>", "Disconnect a player from the server");
+            table.AddRow("makeadmin", "makeadmin <player>", "Grant or revoke Administrator privileges");
+            user.Send("{color:brightcyan}=== Immortal / Administrator Commands ==={color:reset}\r\n" + table.ToString());
+            return true;
+        }
+
+        public static bool DoGoto(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string arg1 = user.GetArgument();
+            string arg2 = user.GetArgument();
+            if (string.IsNullOrEmpty(arg1))
+            {
+                user.Send("Usage: goto <player|npc|area|x y>");
+                return true;
+            }
+
+            int x, y;
+            if (!string.IsNullOrEmpty(arg2) && int.TryParse(arg1, out x) && int.TryParse(arg2, out y))
+            {
+                Area area = user.Character.Area ?? Server.Instance.MainArea;
+                user.Character.Location = new Location(area, new System.Drawing.Point(x, y));
+                user.Send("You teleport to (" + x + ", " + y + ") in " + area.Name + ".");
+                DoLook(user);
+                return true;
+            }
+
+            User targetUser = FindOnlineUser(arg1);
+            if (targetUser != null && targetUser.Character != null && targetUser.Character.Area != null)
+            {
+                user.Character.Location = targetUser.Character.Location;
+                user.Send("You teleport to " + targetUser.Character.Name + ".");
+                DoLook(user);
+                return true;
+            }
+
+            Character targetChar = user.Character.FindNearby<Character>(arg1, 100, false);
+            if (targetChar != null)
+            {
+                user.Character.Location = targetChar.Location;
+                user.Send("You teleport to " + targetChar.Name + ".");
+                DoLook(user);
+                return true;
+            }
+
+            Area targetArea = Server.Instance.Get<Area>(arg1);
+            if (targetArea != null)
+            {
+                user.Character.Location = new Location(targetArea, targetArea.Start);
+                user.Send("You teleport to " + targetArea.Name + ".");
+                DoLook(user);
+                return true;
+            }
+
+            user.Send("Target not found: " + arg1);
+            return true;
+        }
+
+        public static bool DoTransferPlayer(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            if (string.IsNullOrEmpty(targetName))
+            {
+                user.Send("Usage: transfer <player|npc>");
+                return true;
+            }
+
+            User targetUser = FindOnlineUser(targetName);
+            if (targetUser != null && targetUser.Character != null)
+            {
+                targetUser.Character.Location = user.Character.Location;
+                targetUser.Send("{color:brightcyan}" + user.Character.Name + " has transferred you!{color:reset}");
+                user.Send("You transfer " + targetUser.Character.Name + " to your location.");
+                return true;
+            }
+
+            Character targetChar = user.Character.FindNearby<Character>(targetName, 100, false);
+            if (targetChar != null)
+            {
+                targetChar.Location = user.Character.Location;
+                user.Send("You transfer " + targetChar.Name + " to your location.");
+                return true;
+            }
+
+            user.Send("Target not found: " + targetName);
+            return true;
+        }
+
+        public static bool DoSlay(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            if (string.IsNullOrEmpty(targetName))
+            {
+                user.Send("Usage: slay <target>");
+                return true;
+            }
+
+            Character target = user.Character.FindNearby<Character>(targetName, 0, true);
+            if (target == null || target == user.Character)
+            {
+                user.Send("Target not found here.");
+                return true;
+            }
+
+            user.Character.Area.Send(
+                new String(
+                    "{color:brightred}You call down divine wrath and slay {2} instantly!{color:reset}",
+                    "{color:brightred}You call down divine wrath and slay {2} instantly!{color:reset}",
+                    "{color:brightred}{1} calls down divine wrath and slays you instantly!{color:reset}",
+                    "{color:brightred}{1} calls down divine wrath and slays you instantly!{color:reset}",
+                    "{color:brightred}{1} calls down divine wrath and slays {2} instantly!{color:reset}", null),
+                user.Character, target, 0);
+            target.Die(user.Character);
+            return true;
+        }
+
+        public static bool DoRestoreAdmin(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            List<Character> targets = new List<Character>();
+
+            if (string.IsNullOrEmpty(targetName) || targetName.Equals("self", StringComparison.OrdinalIgnoreCase) || targetName.Equals("me", StringComparison.OrdinalIgnoreCase))
+            {
+                targets.Add(user.Character);
+            }
+            else if (targetName.Equals("all", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (User u in Damdai.Collections.Util.CopyList<User>(Server.Instance.Users))
+                    if (u != null && u.Character != null)
+                        targets.Add(u.Character);
+            }
+            else
+            {
+                User targetUser = FindOnlineUser(targetName);
+                if (targetUser != null && targetUser.Character != null)
+                    targets.Add(targetUser.Character);
+                else
+                {
+                    Character nearby = user.Character.FindNearby<Character>(targetName, 0, true);
+                    if (nearby != null)
+                        targets.Add(nearby);
+                }
+            }
+
+            if (targets.Count == 0)
+            {
+                user.Send("Target not found: " + targetName);
+                return true;
+            }
+
+            foreach (Character ch in targets)
+            {
+                foreach (Stat s in ch.Stats.Values)
+                    s.Current = s.Max;
+                ch.StatusEffects.Clear();
+                if (ch.Position < Object.Positions.Stopped)
+                    ch.Position = Object.Positions.Stopped;
+                if (ch != user.Character)
+                    ch.Send("{color:brightcyan}You have been fully restored by " + user.Character.Name + "!{color:reset}");
+            }
+
+            user.Send("Restored " + targets.Count + " character(s) to full health and stats.");
+            return true;
+        }
+
+        public static bool DoPurge(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            if (!string.IsNullOrEmpty(targetName))
+            {
+                Object target = user.Character.FindNearby<Object>(targetName, 0, true);
+                if (target == null || target == user.Character || (target is Character && !(target is Npc)))
+                {
+                    user.Send("Purgeable object not found: " + targetName);
+                    return true;
+                }
+                string removedName = target.Name;
+                target.Parent = null;
+                user.Send("Purged " + removedName + ".");
+                return true;
+            }
+
+            List<Object> roomObjs = user.Character.NearbyObjects<Object>(0, true, user.Character);
+            int purged = 0;
+            foreach (Object o in roomObjs)
+            {
+                if (o is Npc || o is Item)
+                {
+                    o.Parent = null;
+                    purged++;
+                }
+            }
+            user.Send("Purged " + purged + " object(s) from the room.");
+            return true;
+        }
+
+        public static bool DoSpawn(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string first = user.GetArgument();
+            string rest = user.Command;
+            user.Command = null;
+            if (string.IsNullOrEmpty(first))
+            {
+                user.Send("Usage: spawn <npc|item> <blueprint name>");
+                return true;
+            }
+
+            string kind = string.Empty;
+            string bpName = first;
+            if ((first.Equals("npc", StringComparison.OrdinalIgnoreCase) || first.Equals("item", StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrEmpty(rest))
+            {
+                kind = first.ToLower();
+                bpName = rest.Trim();
+            }
+            else if (!string.IsNullOrEmpty(rest))
+            {
+                bpName = (first + " " + rest).Trim();
+            }
+
+            if (kind != "item")
+            {
+                Npc npcBp = Server.Instance.Get<Npc>(bpName);
+                if (npcBp != null)
+                {
+                    Npc npc = Npc.Create(npcBp);
+                    npc.Location = user.Character.Location;
+                    user.Send("Spawned NPC '" + npc.Name + "' at your location.");
+                    return true;
+                }
+            }
+
+            if (kind != "npc")
+            {
+                Item itemBp = Server.Instance.Get<Item>(bpName);
+                if (itemBp != null)
+                {
+                    Item item = Item.Create(itemBp);
+                    item.Parent = user.Character;
+                    user.Send("Spawned Item '" + item.Name + "' in your inventory.");
+                    return true;
+                }
+            }
+
+            user.Send("No NPC or Item blueprint found matching '" + bpName + "'.");
+            return true;
+        }
+
+        public static bool DoAnnounce(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string msg = user.Command;
+            user.Command = null;
+            if (string.IsNullOrEmpty(msg))
+            {
+                user.Send("Usage: announce <message>");
+                return true;
+            }
+
+            string broadcast = "{color:brightyellow}[ANNOUNCEMENT] " + user.Character.Name + ": " + msg + "{color:reset}";
+            user.Send(broadcast);
+            Server.Instance.Echo(broadcast, user.Character);
+            return true;
+        }
+
+        public static bool DoWizStat(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            Object target = null;
+            if (string.IsNullOrEmpty(targetName) || targetName.Equals("self", StringComparison.OrdinalIgnoreCase))
+            {
+                target = user.Character;
+            }
+            else
+            {
+                target = user.Character.FindNearby<Object>(targetName, 0, true) ?? user.Character.FindItemInInventory(targetName);
+                if (target == null)
+                {
+                    User u = FindOnlineUser(targetName);
+                    if (u != null)
+                        target = u.Character;
+                }
+            }
+
+            if (target == null)
+            {
+                user.Send("Object not found: " + targetName);
+                return true;
+            }
+
+            string info = "{color:brightcyan}=== WizStat: " + target.Name + " ==={color:reset}\r\n" +
+                          "Type:     " + target.GetType().Name + "\r\n" +
+                          "ID:       " + target.Id + "\r\n" +
+                          "Location: " + (target.Area != null ? (target.Area.Name + " (" + target.Location.Point.X + ", " + target.Location.Point.Y + ")") : "Inventory/None") + "\r\n" +
+                          "Position: " + target.Position + "\r\n" +
+                          "Value:    $" + target.Value;
+
+            Character ch = target as Character;
+            if (ch != null)
+            {
+                if (ch.User != null)
+                    info += "\r\nBank:     $" + ch.User.BankBalance + "\r\nAdmin:    " + ch.User.Flags.Get((int)User.UserFlags.Administrator);
+                info += "\r\nItems:    " + ch.Inventory.Count + " in inventory, " + ch.Equipment.Count + " equipped";
+                foreach (Stat s in ch.Stats.Values)
+                {
+                    StatBlueprint bp = s.Blueprint;
+                    if (bp != null)
+                        info += "\r\nStat [" + bp.Name + "]: " + s.Current + " / " + s.Max;
+                }
+            }
+
+            user.Send(info);
+            return true;
+        }
+
+        public static bool DoSetStat(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            string statName = user.GetArgument();
+            string valStr = user.GetArgument();
+            long val;
+            if (string.IsNullOrEmpty(targetName) || string.IsNullOrEmpty(statName) || string.IsNullOrEmpty(valStr) || !long.TryParse(valStr, out val))
+            {
+                user.Send("Usage: setstat <target> <stat|money|bank> <value>");
+                return true;
+            }
+
+            Character target = null;
+            if (targetName.Equals("self", StringComparison.OrdinalIgnoreCase) || targetName.Equals("me", StringComparison.OrdinalIgnoreCase))
+                target = user.Character;
+            else
+            {
+                User u = FindOnlineUser(targetName);
+                target = (u != null && u.Character != null) ? u.Character : user.Character.FindNearby<Character>(targetName, 0, true);
+            }
+
+            if (target == null)
+            {
+                user.Send("Target character not found: " + targetName);
+                return true;
+            }
+
+            if (statName.Equals("money", StringComparison.OrdinalIgnoreCase) || statName.Equals("gold", StringComparison.OrdinalIgnoreCase))
+            {
+                target.Value = (int)val;
+                user.Send("Set " + target.Name + "'s money to $" + target.Value + ".");
+                return true;
+            }
+            if (statName.Equals("bank", StringComparison.OrdinalIgnoreCase) && target.User != null)
+            {
+                target.User.BankBalance = (int)val;
+                user.Send("Set " + target.Name + "'s bank balance to $" + target.User.BankBalance + ".");
+                return true;
+            }
+
+            Stat stat = target.GetStat(statName);
+            if (stat == null)
+            {
+                StatBlueprint bp = Server.Instance.Get<StatBlueprint>(statName);
+                if (bp != null)
+                {
+                    stat = new Stat(bp.Id);
+                    target.Stats[bp.Id] = stat;
+                }
+            }
+
+            if (stat == null)
+            {
+                user.Send("Stat not found: " + statName);
+                return true;
+            }
+
+            stat.Max = val;
+            stat.Current = val;
+            user.Send("Set " + target.Name + "'s " + stat.Blueprint.Name + " to " + val + ".");
+            return true;
+        }
+
+        public static bool DoSilencePlayer(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            User targetUser = FindOnlineUser(targetName);
+            if (targetUser == null)
+            {
+                user.Send("No online player found matching '" + targetName + "'.");
+                return true;
+            }
+
+            bool silenced = !targetUser.Flags.Get((int)User.UserFlags.Silenced);
+            targetUser.Flags.Set((int)User.UserFlags.Silenced, silenced);
+            user.Send(targetUser.Character.Name + " is now " + (silenced ? "silenced" : "unsilenced") + ".");
+            targetUser.Send(silenced ? "{color:red}You have been silenced by an administrator.{color:reset}" : "{color:green}Your silence has been lifted.{color:reset}");
+            return true;
+        }
+
+        public static bool DoKickPlayer(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            User targetUser = FindOnlineUser(targetName);
+            if (targetUser == null || targetUser == user)
+            {
+                user.Send("Specify another online player to kick.");
+                return true;
+            }
+
+            string kickedName = targetUser.Character.Name;
+            targetUser.Send("{color:brightred}You have been disconnected by an administrator.{color:reset}");
+            Server.Instance.Disconnect(targetUser);
+            user.Send("Disconnected " + kickedName + ".");
+            return true;
+        }
+
+        public static bool DoMakeAdmin(User user)
+        {
+            if (!RequireAdmin(user))
+                return true;
+
+            string targetName = user.GetArgument();
+            User targetUser = FindOnlineUser(targetName);
+            if (targetUser == null)
+            {
+                user.Send("No online player found matching '" + targetName + "'.");
+                return true;
+            }
+
+            bool isAdmin = !targetUser.Flags.Get((int)User.UserFlags.Administrator);
+            targetUser.Flags.Set((int)User.UserFlags.Administrator, isAdmin);
+            user.Send(targetUser.Character.Name + " administrator status: " + (isAdmin ? "ENABLED" : "DISABLED") + ".");
+            targetUser.Send(isAdmin
+                ? "{color:brightcyan}You have been granted Administrator privileges! Type 'wizhelp' for commands.{color:reset}"
+                : "{color:yellow}Your Administrator privileges have been revoked.{color:reset}");
             return true;
         }
         #endregion

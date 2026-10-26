@@ -19,9 +19,9 @@ namespace Ultimud
             Logout,
             NewCharacter,
             Deleted,
-            MessagePosted
-            //Death,
-            //LevelUp,
+            MessagePosted,
+            Death,
+            LevelUp,
         }
 
         BitArray events_ = new BitArray(32);

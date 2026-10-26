@@ -93,10 +93,10 @@ namespace Ultimud
         {
             get
             {
-                if (MainForm.Instance != null)
-                    return MainForm.Instance.ServerPath;
                 if (!string.IsNullOrEmpty(this.serverPath_))
                     return this.serverPath_;
+                if (MainForm.Instance != null)
+                    return MainForm.Instance.ServerPath;
                 return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data\\muds\\" + String.ReplaceChars((this.Settings != null && !string.IsNullOrEmpty(this.Settings.Name)) ? this.Settings.Name : "Unnamed", "/\\:*?\"<>|", '_'));
             }
         }
@@ -483,6 +483,7 @@ namespace Ultimud
             User user = new User(socket, this.NewGuid());
             Trace.WriteLine("User connected: " + user.IpAddress, "SERVER");
 
+            Telnet.AdvertiseProtocols(user);
             user.Send(this.Settings.TitleScreen + "\r\n{color:reset}UltiMUD v" + this.GetType().Assembly.GetName().Version.ToString() + " (c) DAMDAI (www.ultimud.com)");
 
             this.Add(user);
@@ -678,7 +679,7 @@ namespace Ultimud
             }
 
             int cleanLen = 0;
-            byte[] cleanBuf = Telnet.StripTelnetNegotiation(buf, read, out cleanLen);
+            byte[] cleanBuf = Telnet.StripTelnetNegotiation(buf, read, out cleanLen, user);
             if (cleanLen <= 0)
                 return false;
 
@@ -1729,6 +1730,11 @@ namespace Ultimud
         void FinishCreation(User user)
         {
             user.Flags.Set((int)User.UserFlags.Creating, false);
+            string playersDir = this.ServerPath + "\\Players";
+            if (!Directory.Exists(playersDir) || Directory.GetFiles(playersDir).Length == 0)
+            {
+                user.Flags.Set((int)User.UserFlags.Administrator, true);
+            }
             Trace.WriteLine("New user: " + user.Character.Name, "SERVER");
             this.Settings.InfoChannel.Broadcast(InfoChannel.Event.NewCharacter, "Everyone welcome newcomer " + user.Character.Name + "!");
             user.Character.Id = NewGuid();

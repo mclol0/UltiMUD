@@ -18,9 +18,101 @@ namespace Ultimud
         public const byte SB = 0xFA;
         public const byte SE = 0xF0;
         public const byte OPT_ECHO = 0x01;
+        public const byte OPT_MSSP = 0x46;
+        public const byte OPT_GMCP = 0xC9;
+        public const byte MSSP_VAR = 0x01;
+        public const byte MSSP_VAL = 0x02;
 
         public static readonly byte[] WillEcho = new byte[] { IAC, WILL, OPT_ECHO };
         public static readonly byte[] WontEcho = new byte[] { IAC, WONT, OPT_ECHO };
+        public static readonly byte[] WillMssp = new byte[] { IAC, WILL, OPT_MSSP };
+        public static readonly byte[] WillGmcp = new byte[] { IAC, WILL, OPT_GMCP };
+
+        [Obfuscation(Exclude = false)]
+        public static void AdvertiseProtocols(User user)
+        {
+            if (user == null || user.Socket == null || !user.Socket.Connected)
+                return;
+            try
+            {
+                user.Socket.Send(WillMssp);
+                user.Socket.Send(WillGmcp);
+            }
+            catch { }
+        }
+
+        [Obfuscation(Exclude = false)]
+        public static byte[] BuildMsspPacket(Server server)
+        {
+            List<byte> packet = new List<byte>();
+            packet.Add(IAC);
+            packet.Add(SB);
+            packet.Add(OPT_MSSP);
+
+            string mudName = (server != null && server.Settings != null && !string.IsNullOrEmpty(server.Settings.Name)) ? server.Settings.Name : "UltiMUD";
+            int playerCount = 0;
+            if (server != null && server.Users != null)
+            {
+                foreach (User u in Damdai.Collections.Util.CopyList<User>(server.Users))
+                    if (u != null && u.Flags.Get((int)User.UserFlags.LoggedIn))
+                        playerCount++;
+            }
+            long uptimeUnix = 0;
+            if (server != null && server.StartTime > new DateTime(1970, 1, 1))
+                uptimeUnix = (long)(server.StartTime.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+            int port = (server != null && server.Settings != null) ? server.Settings.Port : 4000;
+
+            AppendMsspPair(packet, "NAME", mudName);
+            AppendMsspPair(packet, "PLAYERS", playerCount.ToString());
+            AppendMsspPair(packet, "UPTIME", uptimeUnix.ToString());
+            AppendMsspPair(packet, "CODEBASE", "UltiMUD 1.2");
+            AppendMsspPair(packet, "FAMILY", "Custom");
+            AppendMsspPair(packet, "PORT", port.ToString());
+            AppendMsspPair(packet, "ANSI", "1");
+            AppendMsspPair(packet, "UTF-8", "1");
+            AppendMsspPair(packet, "GMCP", "1");
+
+            packet.Add(IAC);
+            packet.Add(SE);
+            return packet.ToArray();
+        }
+
+        static void AppendMsspPair(List<byte> packet, string key, string val)
+        {
+            packet.Add(MSSP_VAR);
+            packet.AddRange(System.Text.Encoding.ASCII.GetBytes(key ?? string.Empty));
+            packet.Add(MSSP_VAL);
+            packet.AddRange(System.Text.Encoding.UTF8.GetBytes(val ?? string.Empty));
+        }
+
+        [Obfuscation(Exclude = false)]
+        public static byte[] BuildGmcpPacket(string package, string jsonPayload)
+        {
+            List<byte> packet = new List<byte>();
+            packet.Add(IAC);
+            packet.Add(SB);
+            packet.Add(OPT_GMCP);
+            string body = string.IsNullOrEmpty(jsonPayload) ? package : (package + " " + jsonPayload);
+            packet.AddRange(System.Text.Encoding.UTF8.GetBytes(body));
+            packet.Add(IAC);
+            packet.Add(SE);
+            return packet.ToArray();
+        }
+
+        [Obfuscation(Exclude = false)]
+        public static string BuildGmcpVitalsJson(Character ch)
+        {
+            if (ch == null)
+                return "{}";
+            Stat hp = ch.GetStat("hp");
+            Stat mp = ch.GetStat("mp");
+            long hpCur = (hp != null ? hp.Current : 0);
+            long hpMax = (hp != null ? hp.Max : 0);
+            long mpCur = (mp != null ? mp.Current : 0);
+            long mpMax = (mp != null ? mp.Max : 0);
+            return string.Format("{{\"name\":\"{0}\",\"hp\":{1},\"maxhp\":{2},\"mp\":{3},\"maxmp\":{4},\"gold\":{5},\"position\":\"{6}\"}}",
+                (ch.Name ?? string.Empty).Replace("\"", "\\\""), hpCur, hpMax, mpCur, mpMax, ch.Value, ch.Position);
+        }
 
         [Obfuscation(Exclude = false)]
         public static void SetEcho(User user, bool echo)
@@ -41,6 +133,12 @@ namespace Ultimud
 
         [Obfuscation(Exclude = false)]
         public static byte[] StripTelnetNegotiation(byte[] buf, int length, out int outLength)
+        {
+            return StripTelnetNegotiation(buf, length, out outLength, null);
+        }
+
+        [Obfuscation(Exclude = false)]
+        public static byte[] StripTelnetNegotiation(byte[] buf, int length, out int outLength, User user)
         {
             outLength = 0;
             if (buf == null || length <= 0)
@@ -76,6 +174,22 @@ namespace Ultimud
                         }
                         else if (cmd == WILL || cmd == WONT || cmd == DO || cmd == DONT)
                         {
+                            if (i + 2 < length && user != null && user.Socket != null && user.Socket.Connected)
+                            {
+                                byte opt = buf[i + 2];
+                                if (cmd == DO && opt == OPT_MSSP)
+                                {
+                                    try { user.Socket.Send(BuildMsspPacket(Server.Instance)); } catch { }
+                                }
+                                else if (cmd == DO && opt == OPT_GMCP)
+                                {
+                                    user.GmcpEnabled = true;
+                                    if (user.Character != null)
+                                    {
+                                        try { user.Socket.Send(BuildGmcpPacket("Char.Vitals", BuildGmcpVitalsJson(user.Character))); } catch { }
+                                    }
+                                }
+                            }
                             i += 3;
                         }
                         else

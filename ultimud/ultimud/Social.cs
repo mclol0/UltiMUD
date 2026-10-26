@@ -57,6 +57,36 @@ namespace Ultimud
             if (!Server.Instance.DataSets.ContainsKey(typeof(Social)))
                 Server.Instance.DataSets.Add(typeof(Social), new Dictionary<Guid, IIdentifiable>());
         }
+
+        internal static void PostInit()
+        {
+            if (Server.Instance == null || !Server.Instance.DataSets.ContainsKey(typeof(Social)))
+                return;
+            Dictionary<Guid, IIdentifiable> socials = Server.Instance.DataSets[typeof(Social)];
+            if (socials.Count > 0)
+                return;
+
+            AddDefaultSocial("smile", "You smile happily.", "{1} smiles happily.", "You smile warmly at {2}.", "{1} smiles warmly at you.", "{1} smiles warmly at {2}.");
+            AddDefaultSocial("laugh", "You laugh out loud!", "{1} laughs out loud!", "You laugh heartily at {2}.", "{1} laughs heartily at you.", "{1} laughs heartily at {2}.");
+            AddDefaultSocial("wave", "You wave.", "{1} waves.", "You wave goodbye to {2}.", "{1} waves goodbye to you.", "{1} waves goodbye to {2}.");
+            AddDefaultSocial("bow", "You bow deeply.", "{1} bows deeply.", "You bow respectfully to {2}.", "{1} bows respectfully to you.", "{1} bows respectfully to {2}.");
+            AddDefaultSocial("cheer", "You cheer enthusiastically!", "{1} cheers enthusiastically!", "You cheer for {2}!", "{1} cheers for you!", "{1} cheers for {2}!");
+            AddDefaultSocial("nod", "You nod solemnly.", "{1} nods solemnly.", "You nod in agreement with {2}.", "{1} nods in agreement with you.", "{1} nods in agreement with {2}.");
+            AddDefaultSocial("shrug", "You shrug helplessly.", "{1} shrugs helplessly.", "You shrug at {2}.", "{1} shrugs at you.", "{1} shrugs at {2}.");
+            AddDefaultSocial("dance", "You dance a lively jig!", "{1} dances a lively jig!", "You sweep {2} into a lively dance!", "{1} sweeps you into a lively dance!", "{1} sweeps {2} into a lively dance!");
+            AddDefaultSocial("wink", "You wink suggestively.", "{1} winks suggestively.", "You wink at {2}.", "{1} winks at you.", "{1} winks at {2}.");
+            AddDefaultSocial("grin", "You grin mischievously.", "{1} grins mischievously.", "You grin mischievously at {2}.", "{1} grins mischievously at you.", "{1} grins mischievously at {2}.");
+        }
+
+        static void AddDefaultSocial(string name, string selfNoArg, string roomNoArg, string selfTarget, string victimTarget, string roomTarget)
+        {
+            Social s = new Social();
+            s.Id = Guid.NewGuid();
+            s.Name = name;
+            s.Output = new String(selfNoArg, selfNoArg, null, null, roomNoArg, null);
+            s.TargetOutput = new String(selfTarget, selfTarget, victimTarget, victimTarget, roomTarget, null);
+            Server.Instance.DataSets[typeof(Social)][s.Id] = s;
+        }
         
         [Obfuscation(Exclude = false)]
         public void Perform(Character ch, Object target)

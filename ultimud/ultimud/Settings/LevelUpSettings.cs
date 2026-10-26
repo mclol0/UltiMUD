@@ -88,6 +88,10 @@ namespace Ultimud
                         Server.Instance.Echo(this.Message.ToThirdPersonAtFirstPerson(this.Color, o, null), o);
                         break;
                 }
+                if (Server.Instance != null && Server.Instance.Settings != null && Server.Instance.Settings.InfoChannel != null)
+                {
+                    Server.Instance.Settings.InfoChannel.Broadcast(InfoChannel.Event.LevelUp, o.Name + " has raised a level!");
+                }
             }
 
             StatModifier.Apply(this.StatModifications, o, o, o, null, false);

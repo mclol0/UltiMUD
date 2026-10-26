@@ -11,13 +11,15 @@ namespace Ultimud
 {
     [Serializable]
     [Obfuscation(Exclude = true)]
-    internal class Script : IIdentifiable
+    public class Script : IIdentifiable
     {
-        internal enum Types
+        public enum Types
         {
             Npc,
             Ability,
-            StatModifier
+            StatModifier,
+            Library,
+            Server
         }
 
         Guid id_;
@@ -71,6 +73,25 @@ namespace Ultimud
         {
             if (!Server.Instance.DataSets.ContainsKey(typeof(Script)))
                 Server.Instance.DataSets.Add(typeof(Script), new Dictionary<Guid, IIdentifiable>());
+        }
+
+        public static object[] ExecuteScript(string name, params object[] args)
+        {
+            if (Server.Instance == null || string.IsNullOrEmpty(name))
+                return null;
+            Script script = Server.Instance.Get<Script>(name);
+            if (script == null || string.IsNullOrEmpty(script.Code))
+                return null;
+            using (LuaInterface.Lua lua = new LuaInterface.Lua())
+            {
+                lua["server"] = Server.Instance;
+                lua["args"] = args;
+                if (args != null && args.Length > 0)
+                    lua["arg1"] = args[0];
+                if (args != null && args.Length > 1)
+                    lua["arg2"] = args[1];
+                return lua.DoString(script.Code);
+            }
         }
 
         [Obfuscation(Exclude = false)]

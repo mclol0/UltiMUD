@@ -63,6 +63,28 @@ namespace Ultimud
             if (!Server.Instance.DataSets.ContainsKey(typeof(MessageBoard)))
                 Server.Instance.DataSets.Add(typeof(MessageBoard), new Dictionary<Guid, IIdentifiable>());
         }
+
+        internal static void PostInit()
+        {
+            if (Server.Instance == null || !Server.Instance.DataSets.ContainsKey(typeof(MessageBoard)))
+                return;
+            Dictionary<Guid, IIdentifiable> boards = Server.Instance.DataSets[typeof(MessageBoard)];
+            if (boards.Count > 0)
+                return;
+
+            AddDefaultBoard("General", "General discussion for all players");
+            AddDefaultBoard("Announcements", "Official server news and updates");
+            AddDefaultBoard("Ideas", "Suggestions and feature requests");
+        }
+
+        static void AddDefaultBoard(string name, string description)
+        {
+            MessageBoard mb = new MessageBoard();
+            mb.Id = Guid.NewGuid();
+            mb.Name = name;
+            mb.Description = description;
+            Server.Instance.DataSets[typeof(MessageBoard)][mb.Id] = mb;
+        }
         
         public static Server.InputHandler GetHandler(string str)
         {
@@ -91,12 +113,16 @@ namespace Ultimud
                 MessageBoard mb = Server.Instance.Get<MessageBoard>(arg);
                 if (mb == null)
                 {
-                    StringTable table = new StringTable("Board", "Posts", "Most Recent");
-                    table.Columns[1].Alignment = StringTable.Column.Align.Right;
+                    StringTable table = new StringTable("Board", "Description", "Posts", "Most Recent");
+                    table.Columns[2].Alignment = StringTable.Column.Align.Right;
                     foreach (MessageBoard m in Server.Instance.DataSets[typeof(MessageBoard)].Values)
                     {
                         Post lastpost = m.GetLastPost();
-                        table.AddRow(m.Name, m.Posts.Count.ToString(), (lastpost != null ? (lastpost.Date.ToString("MM/dd/yyyy HH:mm:ss") + " by " + lastpost.From) : ""));
+                        table.AddRow(
+                            m.Name,
+                            !string.IsNullOrEmpty(m.Description) ? String.Summarize(m.Description, 28) : "",
+                            m.Posts.Count.ToString(),
+                            (lastpost != null ? (lastpost.Date.ToString("MM/dd/yyyy HH:mm:ss") + " by " + lastpost.From) : ""));
                     }
 
                     table.Sort("board");
@@ -225,7 +251,7 @@ namespace Ultimud
                     int id;
                     if (int.TryParse(cmd2, out id) && board.Posts.TryGetValue(id, out post))
                     {
-                        if (post.PlayerId == user.Id)
+                        if (post.PlayerId == user.Id || user.Flags.Get((int)User.UserFlags.Administrator))
                         {
                             board.DeletePost(post);
                             user.Send("Post deleted.");

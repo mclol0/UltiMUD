@@ -135,6 +135,28 @@ namespace Ultimud
             if (!Server.Instance.DataSets.ContainsKey(typeof(Channel)))
                 Server.Instance.DataSets.Add(typeof(Channel), new Dictionary<Guid, IIdentifiable>());
         }
+
+        internal static void PostInit()
+        {
+            if (Server.Instance == null || !Server.Instance.DataSets.ContainsKey(typeof(Channel)))
+                return;
+            Dictionary<Guid, IIdentifiable> channels = Server.Instance.DataSets[typeof(Channel)];
+            if (channels.Count > 0)
+                return;
+
+            AddDefaultChannel("gossip", "{color:brightyellow}[GOSSIP] You: {msg}{color:reset}", "{color:brightyellow}[GOSSIP] {1}: {msg}{color:reset}");
+            AddDefaultChannel("newbie", "{color:brightgreen}[NEWBIE] You: {msg}{color:reset}", "{color:brightgreen}[NEWBIE] {1}: {msg}{color:reset}");
+            AddDefaultChannel("trade", "{color:brightcyan}[TRADE] You: {msg}{color:reset}", "{color:brightcyan}[TRADE] {1}: {msg}{color:reset}");
+        }
+
+        static void AddDefaultChannel(string name, string selfFmt, string othersFmt)
+        {
+            Channel ch = new Channel();
+            ch.Id = Guid.NewGuid();
+            ch.Name = name;
+            ch.Output = new String(selfFmt, selfFmt, null, null, othersFmt, null);
+            Server.Instance.DataSets[typeof(Channel)][ch.Id] = ch;
+        }
         
         bool CheckRequirements(IObject o)
         {

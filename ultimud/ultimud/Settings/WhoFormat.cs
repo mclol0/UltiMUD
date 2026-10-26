@@ -43,9 +43,20 @@ namespace Ultimud
                 return result;
             }
 
+            string displayName = ch.Name ?? string.Empty;
+            if (user != null)
+            {
+                if (!string.IsNullOrEmpty(user.Title))
+                    displayName += " " + user.Title;
+                if (user.Flags.Get((int)User.UserFlags.Administrator))
+                    displayName += " [ADMIN]";
+                if (user.IsAfk)
+                    displayName += " [AFK]";
+            }
+
             return new string[]
             {
-                ch.Name ?? string.Empty,
+                displayName,
                 ch.Race != null ? ch.Race.Name : "None",
                 ch.Job != null ? ch.Job.Name : "None",
                 ch.Area != null ? ch.Area.Name : "Nowhere"

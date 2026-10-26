@@ -62,7 +62,11 @@ namespace Damdai.Forms
 
 			for (int i = 0; i < scannerResult.Count; i++)
 			{
-				if (lastIndex < (scannerResult[i].Start + scannerResult[i].Length))
+				if (scannerResult[i].Start < lastIndex)
+				{
+					continue;
+				}
+				if (lastIndex < scannerResult[i].Start)
 				{
 					builder.Append(this.ParseRtf(source.Substring(lastIndex, scannerResult[i].Start - lastIndex)));
 				}
@@ -76,7 +80,7 @@ namespace Damdai.Forms
 				builder.Append(this.ParseRtf(source.Substring(lastIndex, source.Length - lastIndex)));
 			}
 
-			return builder.ToString().Replace("\n", "\\par\n");
+			return builder.ToString().Replace("\r\n", "\n").Replace("\n", "\\par\n") + "}";
 		}
 
 		/// <summary>

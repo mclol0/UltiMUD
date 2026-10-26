@@ -43,6 +43,21 @@ namespace Ultimud
         Location startLocation_;
         Dictionary<string, string> aliases_ = new Dictionary<string, string>();
         Dictionary<Guid, bool> channelsettings_ = new Dictionary<Guid, bool>();
+        int bankBalance_;
+        string title_;
+        List<string> ignoredUsers_ = new List<string>();
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        bool isAfk_;
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        string afkMessage_;
+
+        [Obfuscation(Exclude = false)]
+        [NonSerialized]
+        bool gmcpEnabled_;
 
         [Obfuscation(Exclude = false)]
         [NonSerialized]
@@ -125,6 +140,63 @@ namespace Ultimud
         {
             get { return this.prompt_; }
             set { this.prompt_ = value; }
+        }
+
+        [Description("The amount of money this player has stored in the bank.")]
+        public int BankBalance
+        {
+            get { return this.bankBalance_; }
+            set { this.bankBalance_ = System.Math.Max(0, value); }
+        }
+
+        [Description("The custom title of this player.")]
+        public string Title
+        {
+            get { return this.title_; }
+            set { this.title_ = value; }
+        }
+
+        [Browsable(false)]
+        public List<string> IgnoredUsers
+        {
+            get
+            {
+                if (this.ignoredUsers_ == null)
+                    this.ignoredUsers_ = new List<string>();
+                return this.ignoredUsers_;
+            }
+            set { this.ignoredUsers_ = value; }
+        }
+
+        [XmlIgnore]
+        [Browsable(false)]
+        public bool IsAfk
+        {
+            get { return this.isAfk_; }
+            set { this.isAfk_ = value; }
+        }
+
+        [XmlIgnore]
+        [Browsable(false)]
+        public string AfkMessage
+        {
+            get { return this.afkMessage_; }
+            set { this.afkMessage_ = value; }
+        }
+
+        [XmlIgnore]
+        [Browsable(false)]
+        public bool GmcpEnabled
+        {
+            get { return this.gmcpEnabled_; }
+            set { this.gmcpEnabled_ = value; }
+        }
+
+        public bool IsIgnoring(string playerName)
+        {
+            if (string.IsNullOrEmpty(playerName) || this.ignoredUsers_ == null)
+                return false;
+            return this.ignoredUsers_.Exists(delegate(string s) { return string.Equals(s, playerName, StringComparison.OrdinalIgnoreCase); });
         }
 
         [Browsable(false)]
@@ -406,6 +478,11 @@ namespace Ultimud
             this.Flags = user.Flags;
             this.Aliases = user.Aliases;
             this.StartLocation = user.StartLocation;
+            this.bankBalance_ = user.bankBalance_;
+            this.title_ = user.title_;
+            this.ignoredUsers_ = user.ignoredUsers_ ?? new List<string>();
+            if (user.channelsettings_ != null)
+                this.channelsettings_ = user.channelsettings_;
         }
         
         [Obfuscation(Exclude = false)]
@@ -686,7 +763,17 @@ namespace Ultimud
 
                 str += Telnet.Colorize(this.Prompt);
                 byte[] data = Encoding.ASCII.GetBytes(str);
-                try { this.Socket.Send(data); } catch (SocketException) { } catch (ObjectDisposedException) { }
+                try
+                {
+                    if (this.GmcpEnabled && this.Character != null && this.Flags.Get((int)UserFlags.LoggedIn))
+                    {
+                        byte[] gmcp = Telnet.BuildGmcpPacket("Char.Vitals", Telnet.BuildGmcpVitalsJson(this.Character));
+                        this.Socket.Send(gmcp);
+                    }
+                    this.Socket.Send(data);
+                }
+                catch (SocketException) { }
+                catch (ObjectDisposedException) { }
             }
         }
         

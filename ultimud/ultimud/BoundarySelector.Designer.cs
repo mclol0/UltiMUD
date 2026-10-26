@@ -1,4 +1,4 @@
-namespace Ultimud
+﻿namespace Ultimud
 {
     internal partial class BoundarySelector
     {

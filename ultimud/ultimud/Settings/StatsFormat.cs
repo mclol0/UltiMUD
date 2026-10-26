@@ -66,12 +66,14 @@ namespace Ultimud
                 return string.Empty;
 
             string numFmt = (Server.Instance != null && Server.Instance.Settings != null) ? Server.Instance.Settings.NumberFormat : "";
+            string displayName = ch.Name + (user != null && !string.IsNullOrEmpty(user.Title) ? " " + user.Title : "");
             string header =
-                "Name: " + ch.Name + "\r\n" +
+                "Name: " + displayName + "\r\n" +
                 "Race: " + (ch.Race != null ? ch.Race.Name : "None") + "\r\n" +
                 "Job:  " + (ch.Job != null ? ch.Job.Name : "None") + "\r\n" +
                 "Pos:  " + ch.Position.ToString() + "\r\n" +
-                "Gold: " + ch.Value.ToString(numFmt);
+                "Gold: " + ch.Value.ToString(numFmt) +
+                (user != null ? " (Bank: " + user.BankBalance.ToString(numFmt) + ")" : "");
 
             if (ch.Stats == null || ch.Stats.Count == 0)
                 return header;

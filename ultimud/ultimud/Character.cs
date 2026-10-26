@@ -329,6 +329,22 @@ namespace Ultimud
                 this.Equip(item, silent);
                 item.OnUsed(this);
             }
+            else if (!string.IsNullOrEmpty(item.OnUse) ||
+                     (item.UserStatMods != null && item.UserStatMods.Count > 0) ||
+                     (item.AddUserStatusEffects != null && item.AddUserStatusEffects.Count > 0) ||
+                     (item.RemoveUserStatusEffects != null && item.RemoveUserStatusEffects.Count > 0) ||
+                     (item.TargetStatMods != null && item.TargetStatMods.Count > 0) ||
+                     (item.AddTargetStatusEffects != null && item.AddTargetStatusEffects.Count > 0) ||
+                     (item.RemoveTargetStatusEffects != null && item.RemoveTargetStatusEffects.Count > 0))
+            {
+                if (!silent && this.Area != null)
+                    this.Area.Send(new String("You use {2}.", "You use {2}.", null, null, "{1} uses {2}.", null), this, item, 0);
+                item.Apply(this);
+                item.ApplyTargetStatusEffects(this);
+                item.OnUsed(this);
+                if (!item.ObjectFlags.Get((int)ObjFlags.Indestructible))
+                    item.Parent = null;
+            }
             else
             {
                 this.Send("You can't use that.");
@@ -497,6 +513,11 @@ namespace Ultimud
                 Race race = this.Race;
                 if (race != null)
                     this.Area.Send(race.DeathMessage, this, killer, 0);
+                if (!(this is Npc) && Server.Instance != null && Server.Instance.Settings != null && Server.Instance.Settings.InfoChannel != null)
+                {
+                    string deathInfo = this.Name + " has been killed" + (killer != null && !string.IsNullOrEmpty(killer.Name) ? " by " + killer.Name : "") + "!";
+                    Server.Instance.Settings.InfoChannel.Broadcast(InfoChannel.Event.Death, deathInfo);
+                }
                 Server.Instance.Settings.DeathSettings.Apply(this, killer);
                 if (Server.Instance.Settings.PvpSettings.SafeTimer != null && Server.Instance.Settings.PvpSettings.SafeTimer.Ticks > 0)
                 {

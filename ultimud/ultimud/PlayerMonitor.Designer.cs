@@ -1,4 +1,4 @@
-namespace Ultimud
+﻿namespace Ultimud
 {
     partial class PlayerMonitor
     {

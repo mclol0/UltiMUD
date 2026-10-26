@@ -366,8 +366,13 @@ namespace Ultimud
         [DefaultValue(false)]
         public bool Closeable
         {
-            get { return this.closeable_; }
-            set { this.closeable_ = value; }
+            get { return this.closeable_ || (this.objectFlags_ != null && this.objectFlags_.Get((int)ObjFlags.Closeable)); }
+            set
+            {
+                this.closeable_ = value;
+                if (this.objectFlags_ != null)
+                    this.objectFlags_.Set((int)ObjFlags.Closeable, value);
+            }
         }
 
         [Browsable(false)]

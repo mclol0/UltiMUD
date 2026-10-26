@@ -78,6 +78,15 @@ namespace Ultimud
             }
         }
 
+        [DisplayName("Money")]
+        [Description("The amount of money this shop has available to buy items from players.")]
+        [DefaultValue(100000)]
+        public new int Value
+        {
+            get { return base.Value; }
+            set { base.Value = value; }
+        }
+
         [Browsable(false)]
         public List<Item> Stock
         {
@@ -90,6 +99,7 @@ namespace Ultimud
             this.DeathMessage = "{1} crumbles to the ground!";
             this.MapSymbol = "$$";
             this.MapColor = Telnet.Color.Green;
+            this.Value = 100000;
         }
 
         public Item FindItem(string name)
@@ -236,6 +246,7 @@ namespace Ultimud
             base.OnDeserialized(context);
             if (this.itemtags_ == null) this.itemtags_ = new List<Guid>();
             this.itemtypes_ = null;
+            if (this.Value <= 0) this.Value = 100000;
         }
     }
 }

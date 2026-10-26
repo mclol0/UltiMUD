@@ -20,7 +20,19 @@ namespace Ultimud
         {
             string str = value as string;
             IWindowsFormsEditorService service = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
-            Damdai.Forms.TextEditorWindow editor = new Damdai.Forms.TextEditorWindow();
+            bool isLua = false;
+            if (context != null)
+            {
+                if (context.Instance is Command || context.Instance is Script)
+                    isLua = true;
+                else if (context.PropertyDescriptor != null)
+                {
+                    string propName = context.PropertyDescriptor.Name;
+                    if (propName == "Script" || propName == "Code" || propName == "OnUse" || propName == "OnEnter" || propName == "OnLeave")
+                        isLua = true;
+                }
+            }
+            Damdai.Forms.TextEditorWindow editor = new Damdai.Forms.TextEditorWindow(isLua);
             editor.Text = str;
             if (service.ShowDialog(editor) == DialogResult.OK)
                 return editor.Text.Replace("\n", "\r\n").Replace("\r\r\n", "\r\n");

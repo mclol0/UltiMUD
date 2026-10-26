@@ -1,0 +1,4 @@
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\ultimud\bin\Release\Updater.exe
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\ultimud\bin\Release\Updater.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Release\Updater.exe
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Release\Updater.pdb

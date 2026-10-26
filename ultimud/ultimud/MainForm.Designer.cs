@@ -631,7 +631,8 @@ namespace Ultimud
             catch (System.Exception e)
             {
                 System.Diagnostics.Debug.WriteLine(e.ToString());
-                System.Diagnostics.Trace.WriteLine(e.Message);
+                System.Diagnostics.Trace.WriteLine(e.ToString());
+                System.Windows.Forms.MessageBox.Show(e.ToString(), "UltiMUD Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
 

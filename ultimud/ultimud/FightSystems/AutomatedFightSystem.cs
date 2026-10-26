@@ -13,7 +13,7 @@ namespace Ultimud
     {
         [NonSerialized]
         [Obfuscation(Exclude = false)]
-        Dictionary<Object, Object> participants_;
+        Dictionary<Object, Object> participants_ = new Dictionary<Object, Object>();
 
         [NonSerialized]
         [Obfuscation(Exclude = false)]
@@ -98,12 +98,14 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public void Start()
         {
-            this.updateTimer_.Start();
+            if (this.updateTimer_ != null)
+                this.updateTimer_.Start();
         }
 
         public void Finish(string message)
         {
-            this.updateTimer_.Stop();
+            if (this.updateTimer_ != null)
+                this.updateTimer_.Stop();
             Object[] participants = new Object[this.participants_.Keys.Count];
             this.participants_.Keys.CopyTo(participants, 0);
             foreach (Object o in participants)

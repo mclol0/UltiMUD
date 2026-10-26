@@ -20,6 +20,7 @@ namespace Ultimud
         public enum Flags
         {
             Aggressive,
+            Wander,
         }
         public enum TeachTriggers
         {
@@ -203,7 +204,8 @@ namespace Ultimud
         }
 
         [Description("Various flags regarding the behavior of this NPC.")]
-        [Browsable(false)]
+        [Editor(typeof(FlagEditor<Flags>), typeof(UITypeEditor))]
+        [TypeConverter(typeof(Damdai.TypeConverters.BitArrayConverter<Flags>))]
         public BitArray NpcFlags
         {
             get
@@ -268,6 +270,25 @@ namespace Ultimud
             if (this.FightSystem != null) this.FightSystem.Update(this);
             else if (!this.updateTimer_.Update() && this.Area != null && this.Position != Positions.Dead && this.Master == null)
             {
+                if (this.NpcFlags.Get((int)Flags.Aggressive))
+                {
+                    foreach (Character ch in this.NearbyObjects<Character>(0, true, this))
+                    {
+                        if (!(ch is Npc))
+                        {
+                            Ability ability = this.GetRandomAggressiveAbility(ch);
+                            if (ability != null)
+                            {
+                                this.ReplaceCurrentAction(new CommandAction(ability.Name + " " + ch.Name, 1, this));
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (this.FightSystem == null && this.CurrentAction == null && this.NpcFlags.Get((int)Flags.Wander) && Server.RandomNumber.Next(100) < 40)
+                {
+                    this.DoRandomMove();
+                }
                 this.DoScript(ScriptType.OnUpdate, null);
                 this.updateTimer_.Reset();
             }
@@ -302,8 +323,26 @@ namespace Ultimud
         
         public void DoRandomMove()
         {
-            if (this.Position == Positions.Stopped && this.CurrentAction == null)
-                this.DoCommand("travel random 0");
+            if (this.Position == Positions.Stopped && this.CurrentAction == null && this.Area != null)
+            {
+                Area.Direction[] dirs = new Area.Direction[]
+                {
+                    Area.Direction.North, Area.Direction.South, Area.Direction.East, Area.Direction.West,
+                    Area.Direction.Northeast, Area.Direction.Northwest, Area.Direction.Southeast, Area.Direction.Southwest
+                };
+                for (int attempt = 0; attempt < 4; ++attempt)
+                {
+                    Area.Direction dir = dirs[Server.RandomNumber.Next(dirs.Length)];
+                    if (this.Move(
+                        dir,
+                        new String(null, null, null, null, "{1} leaves {dir}.", null),
+                        new String(null, null, null, null, "{1} arrives from the {dir}.", null),
+                        false))
+                    {
+                        break;
+                    }
+                }
+            }
         }
 
         public override void Die(Object killer)
@@ -365,7 +404,7 @@ namespace Ultimud
         void CheckTriggers(string str, IObject actor)
         {
             str = Telnet.Decolorize(str);
-            if (this.FightSystem == null && this.NpcFlags.Get((int)Flags.Aggressive) && Regex.IsMatch(str, @"^[\w ]+ arrives"))
+            if (this.FightSystem == null && this.NpcFlags.Get((int)Flags.Aggressive) && Regex.IsMatch(str, @"^[\w ]+ (arrives|has arrived)"))
             {
                 Ability ability = this.GetRandomAggressiveAbility(actor);
                 if (ability != null && actor != null)

@@ -28,6 +28,7 @@ namespace Ultimud
         List<StatModifier> statMods_ = new List<StatModifier>();
         List<StatModifier> targetStatMods_ = new List<StatModifier>();
         List<StatusEffect> addUserStatusEffects_ = new List<StatusEffect>();
+        List<StatusEffect> removeUserStatusEffects_ = new List<StatusEffect>();
         List<StatusEffect> addTargetStatusEffects_ = new List<StatusEffect>();
         List<StatusEffect> removeTargetStatusEffects_ = new List<StatusEffect>();
         int prepTime_;
@@ -169,6 +170,57 @@ namespace Ultimud
         {
             get { return this.addUserStatusEffects_; }
             set { this.addUserStatusEffects_ = value; }
+        }
+
+        [Category("Status Effects")]
+        [DisplayName("RemoveFromUser")]
+        [Description("The status effects that this item removes from user when used.")]
+        [TypeConverter(typeof(ListConverter<StatusEffect>))]
+        public List<StatusEffect> RemoveUserStatusEffects
+        {
+            get
+            {
+                if (this.removeUserStatusEffects_ == null)
+                    this.removeUserStatusEffects_ = new List<StatusEffect>();
+                return this.removeUserStatusEffects_;
+            }
+            set { this.removeUserStatusEffects_ = value; }
+        }
+
+        [Category("Closeable Properties")]
+        [Description("Can this item be closed?")]
+        [DefaultValue(false)]
+        public new bool Closeable
+        {
+            get { return base.Closeable; }
+            set { base.Closeable = value; }
+        }
+
+        [Category("Closeable Properties")]
+        [Description("Is this item closed?")]
+        [DefaultValue(false)]
+        public new bool Closed
+        {
+            get { return base.Closed; }
+            set { base.Closed = value; }
+        }
+
+        [Category("Closeable Properties")]
+        [Description("Is this item locked?")]
+        [DefaultValue(false)]
+        public new bool Locked
+        {
+            get { return base.Locked; }
+            set { base.Locked = value; }
+        }
+
+        [Category("Closeable Properties")]
+        [Description("The item that is required to lock and unlock this item.")]
+        [Editor(typeof(Server.ObjectBlueprintSelector<Item>), typeof(UITypeEditor))]
+        public new Item Key
+        {
+            get { return base.Key; }
+            set { base.Key = value; }
         }
 
         [Category("Status Effects")]
@@ -364,15 +416,45 @@ namespace Ultimud
         [Obfuscation(Exclude = false)]
         public void ApplyTargetStatusEffects(Object target)
         {
-            foreach (StatusEffect status in this.AddTargetStatusEffects)
-                status.Apply(target, this);
+            if (target == null)
+                return;
+            if (this.TargetStatMods != null && this.TargetStatMods.Count > 0)
+                StatModifier.Apply(this.TargetStatMods, target, this, target, null, false);
+            if (this.AddTargetStatusEffects != null)
+            {
+                foreach (StatusEffect status in this.AddTargetStatusEffects)
+                    status.Apply(target, this);
+            }
+            if (this.RemoveTargetStatusEffects != null)
+            {
+                foreach (StatusEffect effect in this.RemoveTargetStatusEffects)
+                {
+                    StatusEffect se = target.GetStatusEffect(effect.BlueprintId);
+                    if (se != null && target.StatusEffects.Contains(se))
+                        target.RemoveStatusEffect(se);
+                }
+            }
         }
         
         [Obfuscation(Exclude = false)]
         void ApplyUserStatusEffects(Object user)
         {
-            foreach (StatusEffect status in this.AddUserStatusEffects)
-                status.Apply(user, this);
+            if (user == null)
+                return;
+            if (this.AddUserStatusEffects != null)
+            {
+                foreach (StatusEffect status in this.AddUserStatusEffects)
+                    status.Apply(user, this);
+            }
+            if (this.RemoveUserStatusEffects != null)
+            {
+                foreach (StatusEffect effect in this.RemoveUserStatusEffects)
+                {
+                    StatusEffect se = user.GetStatusEffect(effect.BlueprintId);
+                    if (se != null && user.StatusEffects.Contains(se))
+                        user.RemoveStatusEffect(se);
+                }
+            }
         }
         
         [Obfuscation(Exclude = false)]
@@ -442,6 +524,7 @@ namespace Ultimud
                 {
                     this.lua_["item"] = this;
                     this.lua_["actor"] = ch;
+                    this.lua_["user"] = ch;
                     this.lua_.DoString(script);
                 }
             }

@@ -86,6 +86,32 @@ namespace Ultimud
                 int insertIdx = (itemsNode != null ? itemsNode.Index + 1 : serverNode.Nodes.Count);
                 serverNode.Nodes.Insert(insertIdx, tagsNode);
             }
+
+            if (this.playerMenuStrip != null && !this.playerMenuStrip.Items.ContainsKey("administratorToolStripMenuItem"))
+            {
+                ToolStripMenuItem adminItem = new ToolStripMenuItem("&Administrator");
+                adminItem.Name = "administratorToolStripMenuItem";
+                adminItem.Click += delegate(object sender, EventArgs e)
+                {
+                    if (this.treeView1.SelectedNode != null && this.treeView1.SelectedNode.Tag is User)
+                    {
+                        User user = this.treeView1.SelectedNode.Tag as User;
+                        bool isAdmin = !user.Flags.Get((int)User.UserFlags.Administrator);
+                        user.Flags.Set((int)User.UserFlags.Administrator, isAdmin);
+                        adminItem.Checked = isAdmin;
+                    }
+                };
+                this.playerMenuStrip.Items.Add(adminItem);
+                this.playerMenuStrip.Opening += delegate(object sender, CancelEventArgs e)
+                {
+                    if (this.treeView1.SelectedNode != null && this.treeView1.SelectedNode.Tag is User)
+                    {
+                        User user = this.treeView1.SelectedNode.Tag as User;
+                        this.silenceToolStripMenuItem.Checked = user.Flags.Get((int)User.UserFlags.Silenced);
+                        adminItem.Checked = user.Flags.Get((int)User.UserFlags.Administrator);
+                    }
+                };
+            }
         }
 
         void treeView1_MouseClick(object sender, MouseEventArgs e)
