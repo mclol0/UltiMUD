@@ -87,8 +87,17 @@ namespace Ultimud
                     ((ISaveable)this.propertyGrid1.SelectedObject).Save();
                 this.propertyGrid1.SelectedObject = o;
                 this.propertyGrid1.Tag = null;
-                this.toolStripLabel3.Text = (o != null ? o.ToString() : null);
+                this.UpdateInspectorHeader(o);
                 this.objectTree1_ObjectSelectedEvent(o);
+            };
+            this.areaCanvas1.EditAreaRequested += delegate(Area area)
+            {
+                if (area != null)
+                {
+                    this.objectTree1_EditObjectEvent(area);
+                    if (this.server_ != null)
+                        this.objectTree1.Generate(this.server_);
+                }
             };
             this.objectTree1.GoTo += delegate(Object o)
             {
@@ -116,18 +125,12 @@ namespace Ultimud
                 this.splitContainer3.Panel2Collapsed = false;
             };
             Settings.NameChangedEvent += this.ServerSettings_NameChangedEvent;
-            this.toolStripStatusLabel1.Text = string.Empty;
-            this.toolStripStatusLabel2.Text = string.Empty;
-            this.toolStripStatusLabel3.Text = string.Empty;
-            this.indexToolStripMenuItem.Text = "&Lua Scripting Guide && API Reference";
-            ToolStripButton guideBtn = new ToolStripButton("Scripting Guide (F1)");
-            guideBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            guideBtn.Font = new Font(this.toolStrip1.Font, FontStyle.Bold);
-            guideBtn.ForeColor = Color.FromArgb(20, 70, 140);
-            guideBtn.ToolTipText = "Open the UltiMUD Lua Scripting Guide & API Reference (F1)";
-            guideBtn.Click += this.indexToolStripMenuItem_Click;
-            this.toolStrip1.Items.Add(new ToolStripSeparator());
-            this.toolStrip1.Items.Add(guideBtn);
+            this.toolStripStatusLabel1.Text = "○ Server Offline";
+            this.toolStripStatusLabel2.Text = "0 users online";
+            this.toolStripStatusLabel3.Text = "Uptime: 00:00:00";
+
+            this.ApplyModernStudioLayout();
+
             this.areaCanvas1.ViewType = AreaCanvas.View.Design2;
             this.CheckForUpdates(true, true);
             this.ShowChangeLog();
@@ -140,6 +143,350 @@ namespace Ultimud
                 this.Init(Server.Load(null, null));
         }
 
+        StudioWorkspaceControl studioWorkspace_;
+        bool isModernStudioActive_ = true;
+        ToolStrip quickCreateBar_;
+        ToolStripButton inspectorEditScriptBtn_;
+        ToolStripButton inspectorEditMapBtn_;
+        ToolStripButton inspectorDuplicateBtn_;
+        ToolStripButton inspectorDeleteBtn_;
+
+        public StudioWorkspaceControl StudioWorkspace
+        {
+            get { return this.studioWorkspace_; }
+        }
+
+        public void ToggleClassicStudioMode()
+        {
+            this.isModernStudioActive_ = !this.isModernStudioActive_;
+            if (this.studioWorkspace_ != null)
+            {
+                this.studioWorkspace_.Visible = this.isModernStudioActive_;
+                if (this.isModernStudioActive_)
+                {
+                    this.studioWorkspace_.BringToFront();
+                    this.studioWorkspace_.RefreshStudio();
+                }
+            }
+            this.toolStrip1.Visible = !this.isModernStudioActive_;
+            if (this.quickCreateBar_ != null)
+                this.quickCreateBar_.Visible = !this.isModernStudioActive_;
+            this.splitContainer1.Visible = !this.isModernStudioActive_;
+            if (!this.isModernStudioActive_ && this.server_ != null)
+            {
+                this.objectTree1.Generate(this.server_);
+                this.areaCanvas1.Invalidate();
+            }
+        }
+
+        public void TriggerNewMud()
+        {
+            this.newToolStripMenuItem_Click(this, EventArgs.Empty);
+        }
+
+        public void TriggerOpenMud()
+        {
+            this.openToolStripMenuItem_Click(this, EventArgs.Empty);
+        }
+
+        public void SetPortText(string portStr)
+        {
+            if (this.toolStripTextBox2 != null && this.toolStripTextBox2.Text != portStr)
+                this.toolStripTextBox2.Text = portStr;
+        }
+
+        void ApplyModernStudioLayout()
+        {
+            this.Font = StudioTheme.FontBase;
+            this.Size = new Size(1340, 850);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            StudioTheme.StyleMenuStrip(this.menuStrip1);
+            StudioTheme.StyleToolStrip(this.toolStrip1, true);
+            StudioTheme.StyleToolStrip(this.toolStrip2, false);
+            StudioTheme.StyleStatusStrip(this.statusStrip1);
+            StudioTheme.StylePropertyGrid(this.propertyGrid1);
+
+            // Create and dock the drastic new Modern Studio Workspace Control
+            this.studioWorkspace_ = new StudioWorkspaceControl(this);
+            this.studioWorkspace_.Dock = DockStyle.Fill;
+            this.Controls.Add(this.studioWorkspace_);
+            this.studioWorkspace_.BringToFront();
+
+            // Hide the legacy 2006 toolbars & splitContainer by default while keeping them 1-click accessible via "Classic View"
+            this.toolStrip1.Visible = false;
+            this.splitContainer1.Visible = false;
+
+            // Add a prominent "✨ Switch to Modern Studio UI" button on the Classic toolbar so users can switch back anytime
+            ToolStripButton modernSwitchBtn = new ToolStripButton("✨ Modern Studio UI");
+            modernSwitchBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            modernSwitchBtn.Font = StudioTheme.FontBold;
+            modernSwitchBtn.ForeColor = Color.FromArgb(96, 165, 250);
+            modernSwitchBtn.ToolTipText = "Switch back to the Modern UltiMUD Creator Studio workspace";
+            modernSwitchBtn.Click += delegate { this.ToggleClassicStudioMode(); };
+            this.toolStrip1.Items.Insert(0, new ToolStripSeparator());
+            this.toolStrip1.Items.Insert(0, modernSwitchBtn);
+
+            // Style Server Activity Log terminal
+            this.richTextBox1.BackColor = Color.FromArgb(15, 23, 42);
+            this.richTextBox1.ForeColor = Color.FromArgb(226, 232, 240);
+            this.richTextBox1.Font = StudioTheme.FontMono;
+            this.richTextBox1.BorderStyle = BorderStyle.None;
+            this.tabPage1.Text = "📋 Server Activity Log & Console";
+
+            // Upgrade top toolbar buttons with clear labels so nothing is cryptic
+            this.toolStripButton4.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripButton4.Text = "New MUD";
+            this.toolStripButton4.ToolTipText = "Create a brand new MUD project";
+
+            this.toolStripButton5.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripButton5.Text = "Open";
+            this.toolStripButton5.ToolTipText = "Open an existing .mud project file";
+
+            ToolStripButton saveBtn = new ToolStripButton("💾 Save");
+            saveBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            saveBtn.Font = StudioTheme.FontBold;
+            saveBtn.ForeColor = Color.FromArgb(191, 219, 254);
+            saveBtn.ToolTipText = "Save all world areas, blueprints, commands, and settings";
+            saveBtn.Click += delegate
+            {
+                if (this.server_ != null)
+                {
+                    this.server_.Save();
+                    if (this.propertyGrid1.SelectedObject is ISaveable)
+                        ((ISaveable)this.propertyGrid1.SelectedObject).Save();
+                    this.toolStripStatusLabel1.Text = "✔ Saved MUD (" + DateTime.Now.ToShortTimeString() + ")";
+                }
+            };
+            int openIdx = this.toolStrip1.Items.IndexOf(this.toolStripButton5);
+            if (openIdx >= 0)
+                this.toolStrip1.Items.Insert(openIdx + 1, saveBtn);
+
+            this.toolStripLabel2.Text = "Telnet Port:";
+            this.toolStripLabel2.Font = StudioTheme.FontBold;
+            this.toolStripTextBox2.BackColor = Color.White;
+            this.toolStripTextBox2.ForeColor = StudioTheme.TextPrimary;
+            this.toolStripTextBox2.Font = StudioTheme.FontBold;
+
+            this.toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripButton1.Text = "Start Server";
+            this.toolStripButton1.Font = StudioTheme.FontBold;
+            this.toolStripButton1.ForeColor = Color.FromArgb(134, 239, 172);
+
+            this.toolStripButton2.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripButton2.Text = "Pause";
+
+            this.toolStripButton3.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripButton3.Text = "Stop";
+
+            this.indexToolStripMenuItem.Text = "&Lua Scripting Guide && API Reference";
+
+            ToolStripButton playtestBtn = new ToolStripButton("🎮 Playtest MUD");
+            playtestBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            playtestBtn.Font = StudioTheme.FontBold;
+            playtestBtn.ForeColor = Color.FromArgb(74, 222, 128);
+            playtestBtn.ToolTipText = "Open the Built-In Local MUD Playtester & Admin Test Client (F6)";
+            playtestBtn.Click += new EventHandler(this.OpenTestClient_Click);
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(playtestBtn);
+
+            ToolStripButton starterKitBtn = new ToolStripButton("✦ Starter Kit Wizard");
+            starterKitBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            starterKitBtn.Font = StudioTheme.FontBold;
+            starterKitBtn.ForeColor = Color.FromArgb(216, 180, 254);
+            starterKitBtn.ToolTipText = "Generate starter RPG Stats, Races, Classes, Items, NPCs, Abilities & Town Map";
+            starterKitBtn.Click += new EventHandler(this.OpenStarterKit_Click);
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(starterKitBtn);
+
+            ToolStripButton auditorBtn = new ToolStripButton("✔ Audit && Validate");
+            auditorBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            auditorBtn.Font = StudioTheme.FontBold;
+            auditorBtn.ForeColor = Color.FromArgb(103, 232, 249);
+            auditorBtn.ToolTipText = "Scan your MUD for missing setup requirements, broken references & Lua syntax errors (F7)";
+            auditorBtn.Click += new EventHandler(this.OpenAuditor_Click);
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(auditorBtn);
+
+            ToolStripButton guideBtn = new ToolStripButton("📘 Lua Guide (F1)");
+            guideBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            guideBtn.Font = StudioTheme.FontBold;
+            guideBtn.ForeColor = Color.FromArgb(253, 224, 71);
+            guideBtn.ToolTipText = "Open the UltiMUD Lua Scripting Guide & API Reference (F1)";
+            guideBtn.Click += this.indexToolStripMenuItem_Click;
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(guideBtn);
+
+            // Build the 1-Click Quick-Create Studio Workflow Bar directly below toolStrip1
+            this.quickCreateBar_ = new ToolStrip();
+            this.quickCreateBar_.Name = "quickCreateBar";
+            this.quickCreateBar_.Dock = DockStyle.Top;
+            StudioTheme.StyleToolStrip(this.quickCreateBar_, false);
+
+            ToolStripLabel quickLbl = new ToolStripLabel("⚡ Quick Create:");
+            quickLbl.Font = StudioTheme.FontBold;
+            quickLbl.ForeColor = StudioTheme.TextSecondary;
+            this.quickCreateBar_.Items.Add(quickLbl);
+
+            ToolStripButton editMapQuickBtn = new ToolStripButton("🗺️ Edit World Map");
+            editMapQuickBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            editMapQuickBtn.Font = StudioTheme.FontBold;
+            editMapQuickBtn.ForeColor = StudioTheme.AccentBlue;
+            editMapQuickBtn.ToolTipText = "Open the 2D Map & Area Builder to paint rooms, roads, walls, doors, shops, and spawns";
+            editMapQuickBtn.Click += delegate
+            {
+                Area targetArea = (this.areaCanvas1 != null && this.areaCanvas1.Area != null)
+                    ? this.areaCanvas1.Area
+                    : (this.server_ != null ? this.server_.MainArea : null);
+                if (targetArea != null)
+                {
+                    this.objectTree1_EditObjectEvent(targetArea);
+                    if (this.server_ != null)
+                        this.objectTree1.Generate(this.server_);
+                }
+            };
+            this.quickCreateBar_.Items.Add(editMapQuickBtn);
+            this.quickCreateBar_.Items.Add(new ToolStripSeparator());
+
+            this.AddQuickCreateButton("⚔️ + Item", "Create a new weapon, armor, potion, container, or item blueprint", delegate { this.objectTree1.CreateNewItem(); });
+            this.AddQuickCreateButton("🐉 + NPC", "Create a new monster, shopkeeper, trainer, or quest NPC blueprint", delegate { this.objectTree1.CreateNewNpc(); });
+            this.AddQuickCreateButton("✨ + Ability", "Create a new combat skill, spell, heal, or buff ability", delegate { this.objectTree1.CreateNewAbility(); });
+            this.AddQuickCreateButton("🛡️ + Race", "Create a new playable character race", delegate { this.objectTree1.CreateNewRace(); });
+            this.AddQuickCreateButton("🧙 + Class/Job", "Create a new playable character class / job", delegate { this.objectTree1.CreateNewJob(); });
+            this.AddQuickCreateButton("📊 + Stat", "Create a new character attribute / stat blueprint (e.g. Strength, Mana)", delegate { this.objectTree1.CreateNewStat(); });
+            this.quickCreateBar_.Items.Add(new ToolStripSeparator());
+            this.AddQuickCreateButton("📜 + Lua Command", "Create a new custom player or admin Lua command", delegate
+            {
+                this.objectTree1.CreateNewCommand();
+                if (this.propertyGrid1.SelectedObject is Command)
+                    this.objectTree1.OpenCodeOrTextEditor(this.propertyGrid1.SelectedObject);
+            });
+            this.AddQuickCreateButton("📖 + Help Topic", "Create a new in-game HELP topic file", delegate
+            {
+                this.objectTree1.CreateNewHelp();
+                if (this.propertyGrid1.SelectedObject is Help)
+                    this.objectTree1.OpenCodeOrTextEditor(this.propertyGrid1.SelectedObject);
+            });
+
+            // Insert quickCreateBar_ right below toolStrip1 in Controls z-order
+            this.quickCreateBar_.Visible = false;
+            this.Controls.Add(this.quickCreateBar_);
+            int tsIndex = this.Controls.IndexOf(this.toolStrip1);
+            if (tsIndex >= 0)
+                this.Controls.SetChildIndex(this.quickCreateBar_, tsIndex);
+            this.studioWorkspace_.BringToFront();
+
+            // Enhance Inspector Header Bar (toolStrip2 above PropertyGrid) with contextual action buttons
+            this.toolStripLabel3.Font = StudioTheme.FontBold;
+            this.toolStripLabel3.ForeColor = StudioTheme.AccentBlue;
+
+            this.inspectorEditScriptBtn_ = new ToolStripButton("📝 Edit Code/Text");
+            this.inspectorEditScriptBtn_.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            this.inspectorEditScriptBtn_.Font = StudioTheme.FontBold;
+            this.inspectorEditScriptBtn_.ForeColor = StudioTheme.AccentPurple;
+            this.inspectorEditScriptBtn_.ToolTipText = "Open the full syntax-highlighted Lua / Text Editor for this item";
+            this.inspectorEditScriptBtn_.Visible = false;
+            this.inspectorEditScriptBtn_.Click += delegate
+            {
+                if (this.propertyGrid1.SelectedObject != null)
+                {
+                    if (this.objectTree1.OpenCodeOrTextEditor(this.propertyGrid1.SelectedObject))
+                        this.propertyGrid1.Refresh();
+                }
+            };
+            this.toolStrip2.Items.Add(new ToolStripSeparator());
+            this.toolStrip2.Items.Add(this.inspectorEditScriptBtn_);
+
+            this.inspectorEditMapBtn_ = new ToolStripButton("🗺️ Edit on Map");
+            this.inspectorEditMapBtn_.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            this.inspectorEditMapBtn_.Font = StudioTheme.FontBold;
+            this.inspectorEditMapBtn_.ForeColor = StudioTheme.AccentBlue;
+            this.inspectorEditMapBtn_.ToolTipText = "Open the 2D Map Editor focused on this object";
+            this.inspectorEditMapBtn_.Visible = false;
+            this.inspectorEditMapBtn_.Click += delegate
+            {
+                if (this.propertyGrid1.SelectedObject is Object)
+                    this.objectTree1_EditObjectEvent(this.propertyGrid1.SelectedObject as Object);
+            };
+            this.toolStrip2.Items.Add(this.inspectorEditMapBtn_);
+
+            this.inspectorDuplicateBtn_ = new ToolStripButton("📋 Clone");
+            this.inspectorDuplicateBtn_.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            this.inspectorDuplicateBtn_.ForeColor = StudioTheme.TextPrimary;
+            this.inspectorDuplicateBtn_.ToolTipText = "Duplicate / clone the currently selected object";
+            this.inspectorDuplicateBtn_.Visible = false;
+            this.inspectorDuplicateBtn_.Click += delegate { this.objectTree1.DuplicateSelectedObject(); };
+            this.toolStrip2.Items.Add(this.inspectorDuplicateBtn_);
+
+            this.inspectorDeleteBtn_ = new ToolStripButton("🗑️ Delete");
+            this.inspectorDeleteBtn_.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            this.inspectorDeleteBtn_.ForeColor = StudioTheme.AccentRed;
+            this.inspectorDeleteBtn_.ToolTipText = "Delete the currently selected object";
+            this.inspectorDeleteBtn_.Visible = false;
+            this.inspectorDeleteBtn_.Click += delegate { this.objectTree1.DeleteSelectedObject(); };
+            this.toolStrip2.Items.Add(this.inspectorDeleteBtn_);
+
+            // Also add entries to File and View menus
+            ToolStripMenuItem fileStarterMenu = new ToolStripMenuItem("MUD &Starter Kit && World Generator...");
+            fileStarterMenu.Click += new EventHandler(this.OpenStarterKit_Click);
+            this.fileToolStripMenuItem.DropDownItems.Insert(2, fileStarterMenu);
+
+            ToolStripMenuItem viewPlaytestMenu = new ToolStripMenuItem("&Built-In Test Client / Playtester");
+            viewPlaytestMenu.ShortcutKeys = Keys.F6;
+            viewPlaytestMenu.Click += new EventHandler(this.OpenTestClient_Click);
+            this.createToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            this.createToolStripMenuItem.DropDownItems.Add(viewPlaytestMenu);
+
+            ToolStripMenuItem viewAuditorMenu = new ToolStripMenuItem("MUD &Auditor && Lua Script Validator...");
+            viewAuditorMenu.ShortcutKeys = Keys.F7;
+            viewAuditorMenu.Click += new EventHandler(this.OpenAuditor_Click);
+            this.createToolStripMenuItem.DropDownItems.Add(viewAuditorMenu);
+        }
+
+        void AddQuickCreateButton(string text, string tooltip, EventHandler onClick)
+        {
+            ToolStripButton btn = new ToolStripButton(text);
+            btn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            btn.Font = StudioTheme.FontBold;
+            btn.ForeColor = StudioTheme.TextPrimary;
+            btn.ToolTipText = tooltip;
+            btn.Click += onClick;
+            this.quickCreateBar_.Items.Add(btn);
+        }
+
+        void UpdateInspectorHeader(object o)
+        {
+            if (o == null)
+            {
+                this.toolStripLabel3.Text = "Inspector (No Selection)";
+                if (this.inspectorEditScriptBtn_ != null) this.inspectorEditScriptBtn_.Visible = false;
+                if (this.inspectorEditMapBtn_ != null) this.inspectorEditMapBtn_.Visible = false;
+                if (this.inspectorDuplicateBtn_ != null) this.inspectorDuplicateBtn_.Visible = false;
+                if (this.inspectorDeleteBtn_ != null) this.inspectorDeleteBtn_.Visible = false;
+                return;
+            }
+
+            string typeBadge = "[" + o.GetType().Name + "] ";
+            string objName = o.ToString();
+            this.toolStripLabel3.Text = typeBadge + objName;
+
+            bool isCodeOrText = (o is Command || o is Script || o is Help);
+            bool isWorldObj = (o is Area || (o is Object && !(o is Server) && ((Object)o).Area != null));
+            bool isCloneable = (o is Command || o is Help || (o is IIdentifiable && !isWorldObj && !(o is Server)));
+
+            if (this.inspectorEditScriptBtn_ != null)
+            {
+                this.inspectorEditScriptBtn_.Visible = isCodeOrText;
+                this.inspectorEditScriptBtn_.Text = (o is Help) ? "📝 Edit Help Text" : "📝 Edit Lua Script";
+            }
+            if (this.inspectorEditMapBtn_ != null)
+                this.inspectorEditMapBtn_.Visible = isWorldObj;
+            if (this.inspectorDuplicateBtn_ != null)
+                this.inspectorDuplicateBtn_.Visible = isCloneable;
+            if (this.inspectorDeleteBtn_ != null)
+                this.inspectorDeleteBtn_.Visible = isCloneable;
+        }
+
         void ltl_LogEvent(string t1, string t2)
         {
             if (this.IsDisposed || this.Disposing || this.richTextBox1 == null || this.richTextBox1.IsDisposed)
@@ -150,13 +497,15 @@ namespace Ultimud
                     this.Invoke(new Function_void<string, string>(this.ltl_LogEvent), t1, t2);
                 else
                 {
+                    string formatted = string.IsNullOrEmpty(t2)
+                        ? (DateTime.Now + ": " + t1)
+                        : (DateTime.Now + ": " + t2 + ": " + t1);
                     if (this.richTextBox1.TextLength > 0)
                         this.richTextBox1.AppendText("\r\n");
-                    if (string.IsNullOrEmpty(t2))
-                        this.richTextBox1.AppendText(DateTime.Now + ": " + t1);
-                    else
-                        this.richTextBox1.AppendText(DateTime.Now + ": " + t2 + ": " + t1);
+                    this.richTextBox1.AppendText(formatted);
                     this.richTextBox1.ScrollToCaret();
+                    if (this.studioWorkspace_ != null)
+                        this.studioWorkspace_.AppendLogLine(formatted);
                 }
             }
             catch
@@ -249,13 +598,16 @@ namespace Ultimud
             this.areaCanvas1.SetArea(this.server_.MainArea);
             this.objectTree1.Generate(server);
 
-            this.Text = "UltiMUD - " + this.server_.Settings.Name;
+            this.Text = "UltiMUD Studio - " + this.server_.Settings.Name;
             StoredSettings.Instance.GameFile = (this.server_ != null ? this.ServerPath + "\\" + String.ReplaceChars(this.server_.Settings.Name, "/\\:*?\"<>|", '_') + ".mud" : null);
             StoredSettings.Save();
 
             this.propertyGrid1.SelectedObject = server;
+            this.UpdateInspectorHeader(server);
             this.InitImportExportMenu();
             this.InitServerConsole();
+            if (this.studioWorkspace_ != null)
+                this.studioWorkspace_.BindServer(server);
         }
 
         Panel consolePanel_;
@@ -269,24 +621,37 @@ namespace Ultimud
             this.consolePanel_ = new Panel();
             this.consolePanel_.Name = "consolePanel";
             this.consolePanel_.Dock = DockStyle.Bottom;
-            this.consolePanel_.Height = 28;
-            this.consolePanel_.Padding = new Padding(4, 3, 4, 3);
+            this.consolePanel_.Height = 32;
+            this.consolePanel_.BackColor = StudioTheme.SubBarBg;
+            this.consolePanel_.Padding = new Padding(6, 4, 6, 4);
 
             Label lbl = new Label();
-            lbl.Text = "Console:";
+            lbl.Text = "Console >";
+            lbl.Font = StudioTheme.FontBold;
+            lbl.ForeColor = Color.FromArgb(148, 163, 184);
             lbl.AutoSize = false;
-            lbl.Width = 56;
+            lbl.Width = 72;
             lbl.Dock = DockStyle.Left;
             lbl.TextAlign = ContentAlignment.MiddleLeft;
 
             Button execBtn = new Button();
-            execBtn.Text = "Execute";
+            execBtn.Text = "Run";
             execBtn.Width = 68;
             execBtn.Dock = DockStyle.Right;
+            execBtn.FlatStyle = FlatStyle.Flat;
+            execBtn.FlatAppearance.BorderSize = 0;
+            execBtn.BackColor = StudioTheme.AccentBlue;
+            execBtn.ForeColor = Color.White;
+            execBtn.Font = StudioTheme.FontBold;
+            execBtn.Cursor = Cursors.Hand;
 
             this.consoleInput_ = new TextBox();
             this.consoleInput_.Name = "consoleInput";
             this.consoleInput_.Dock = DockStyle.Fill;
+            this.consoleInput_.Font = StudioTheme.FontMono;
+            this.consoleInput_.BackColor = Color.FromArgb(15, 23, 42);
+            this.consoleInput_.ForeColor = Color.White;
+            this.consoleInput_.BorderStyle = BorderStyle.FixedSingle;
 
             EventHandler runCmd = delegate(object s, EventArgs ev)
             {
@@ -937,11 +1302,15 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             else
             {
                 this.toolStripButton1.Enabled = false;
+                this.toolStripButton1.Text = "● Server Online";
                 this.toolStripButton2.Enabled = true;
                 this.toolStripButton2.Checked = false;
                 this.toolStripButton3.Enabled = true;
                 this.toolStripTextBox1.Enabled = false;
                 this.toolStripTextBox2.Enabled = false;
+                this.toolStripStatusLabel1.Text = "● Server Online (Port " + this.ConfiguredPort + ")";
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.UpdateServerRunningState(true, this.ConfiguredPort, this.server_ != null && this.server_.Users != null ? this.server_.Users.Count : 0);
             }
         }
         void server__UserConnectedEvent(User user)
@@ -955,6 +1324,8 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
                 this.objectTree1.Add(user);
                 this.toolStripStatusLabel2.Text = this.server_.Users.Count + " user(s) online";
                 this.areaCanvas1.Invalidate();
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.UpdateServerRunningState(this.server_.IsRunning, this.ConfiguredPort, this.server_.Users.Count);
             }
         }
         void server__UserDisconnectedEvent(User user)
@@ -969,6 +1340,8 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
                     user.Character.MovedEvent -= this.Character_MovedEvent;
                 this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.UpdateServerRunningState(this.server_.IsRunning, this.ConfiguredPort, this.server_.Users.Count);
             }
         }
         void server__UserReconnectedEvent(User user)
@@ -981,6 +1354,8 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             {
                 this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.RefreshOnlinePlayersList();
             }
         }
         void server__UserUnloadedEvent(User user)
@@ -996,6 +1371,8 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
                 this.objectTree1.Remove(user);
                 this.toolStripStatusLabel2.Text = this.server_.Users.Count + " user(s) online";
                 this.areaCanvas1.Invalidate();
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.UpdateServerRunningState(this.server_.IsRunning, this.ConfiguredPort, this.server_.Users.Count);
             }
         }
         void server__StoppedEvent()
@@ -1007,11 +1384,15 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             else
             {
                 this.toolStripButton1.Enabled = true;
+                this.toolStripButton1.Text = "Start Server";
                 this.toolStripButton2.Enabled = false;
                 this.toolStripButton2.Checked = false;
                 this.toolStripButton3.Enabled = false;
                 this.toolStripTextBox1.Enabled = true;
                 this.toolStripTextBox2.Enabled = true;
+                this.toolStripStatusLabel1.Text = "○ Server Offline";
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.UpdateServerRunningState(false, this.ConfiguredPort, 0);
             }
         }
         void server__UserLoginEvent(User user)
@@ -1024,6 +1405,8 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             {
                 this.objectTree1.Update(user);
                 this.areaCanvas1.Invalidate();
+                if (this.studioWorkspace_ != null)
+                    this.studioWorkspace_.RefreshOnlinePlayersList();
                 if (user.Character != null)
                 {
                     user.Character.MovedEvent -= this.Character_MovedEvent;
@@ -1049,6 +1432,111 @@ Would you still like to run this MUD?", "Warning", MessageBoxButtons.YesNo, Mess
             }
 
             this.Init(Server.Load(null, null));
+
+            if (MessageBox.Show(this,
+                "New MUD initialized!\r\n\r\nWould you like to open the MUD Starter Kit & World Generator Wizard to populate starter RPG stats, playable races, classes, items, NPCs, and a starter town?",
+                "MUD Starter Kit Wizard", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                this.OpenStarterKit_Click(this, EventArgs.Empty);
+            }
+        }
+
+        public int ConfiguredPort
+        {
+            get
+            {
+                int p = 4000;
+                if (this.toolStripTextBox2 != null && int.TryParse(this.toolStripTextBox2.Text, out p) && p > 0)
+                    return p;
+                return StoredSettings.Instance != null && StoredSettings.Instance.Port > 0 ? StoredSettings.Instance.Port : 4000;
+            }
+        }
+
+        public void StartServerForPlaytest()
+        {
+            if (this.server_ != null && !this.server_.IsRunning)
+            {
+                this.toolStripButton1_Click(this, EventArgs.Empty);
+            }
+        }
+
+        public void RefreshAllViews()
+        {
+            if (this.server_ == null)
+                return;
+            this.objectTree1.Generate(this.server_);
+            this.areaCanvas1.Invalidate();
+            this.propertyGrid1.Refresh();
+            if (this.studioWorkspace_ != null)
+                this.studioWorkspace_.RefreshStudio();
+            if (!string.IsNullOrEmpty(this.server_.Settings.Name))
+                this.Text = "UltiMUD Studio - " + this.server_.Settings.Name;
+        }
+
+        public void SelectObjectInStudio(object obj)
+        {
+            if (obj == null)
+                return;
+            this.propertyGrid1.SelectedObject = obj;
+            this.splitContainer1.Panel2Collapsed = false;
+            this.objectTree1.SelectObjectInTree(obj);
+            if (obj is Area)
+            {
+                this.areaCanvas1.SetArea(obj as Area);
+            }
+            else if (obj is Object && ((Object)obj).Area != null)
+            {
+                this.areaCanvas1.SetArea(((Object)obj).Area);
+                this.areaCanvas1.GoTo(((Object)obj).Location);
+            }
+            if (this.studioWorkspace_ != null)
+            {
+                if (obj is Item) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.ItemsForge);
+                else if (obj is Npc) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.NpcBestiary);
+                else if (obj is Ability) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.AbilitiesStudio);
+                else if (obj is Race || obj is Job || obj is StatBlueprint || obj is StatusEffectBlueprint) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.RacesClassesStats);
+                else if (obj is Command || obj is Script || obj is Help) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.LuaCodeIde);
+                else if (obj is Area || obj is Object) this.studioWorkspace_.ShowTab(StudioWorkspaceControl.StudioTab.MapPainter);
+            }
+        }
+
+        public Location GetSelectedCanvasLocation()
+        {
+            if (this.studioWorkspace_ != null && this.studioWorkspace_.MapCanvas != null && this.studioWorkspace_.MapCanvas.Area != null)
+            {
+                AreaCanvas sc = this.studioWorkspace_.MapCanvas;
+                Point pt = sc.SelectedPoint != Point.Empty ? sc.SelectedPoint : sc.Area.Start;
+                return new Location(sc.Area, pt);
+            }
+            if (this.areaCanvas1 != null && this.areaCanvas1.Area != null)
+            {
+                Point pt = this.areaCanvas1.SelectedPoint != Point.Empty ? this.areaCanvas1.SelectedPoint : this.areaCanvas1.Area.Start;
+                return new Location(this.areaCanvas1.Area, pt);
+            }
+            if (this.server_ != null && this.server_.MainArea != null)
+                return new Location(this.server_.MainArea, this.server_.MainArea.Start);
+            return null;
+        }
+
+        private void OpenTestClient_Click(object sender, EventArgs e)
+        {
+            TestClientForm.ShowPlaytester(this, this.ConfiguredPort);
+        }
+
+        private void OpenStarterKit_Click(object sender, EventArgs e)
+        {
+            using (MudStarterKitForm dlg = new MudStarterKitForm())
+            {
+                dlg.ShowDialog(this);
+            }
+        }
+
+        private void OpenAuditor_Click(object sender, EventArgs e)
+        {
+            using (MudAuditorForm dlg = new MudAuditorForm())
+            {
+                dlg.ShowDialog(this);
+            }
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)

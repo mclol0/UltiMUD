@@ -2,3 +2,6 @@ c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\ultimud\bin\Debug\Updater.exe
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\ultimud\bin\Debug\Updater.pdb
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Debug\Updater.exe
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Debug\Updater.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Debug\Updater.csproj.AssemblyReference.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Debug\Updater.csproj.CoreCompileInputs.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Updater\obj\Debug\Updater.csproj.Up2Date

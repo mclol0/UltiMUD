@@ -167,6 +167,19 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="FlagEditor.cs" />
+    <Compile Include="TestClientForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MudStarterKitForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MudAuditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StudioTheme.cs" />
+    <Compile Include="StudioWorkspaceControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="FightSystems\ManualFightSystem.cs" />
     <Compile Include="ObjectExplorer.cs">
       <SubType>UserControl</SubType>

@@ -13,4 +13,6 @@ c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\Damdai.dl
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\bin\Release\Damdai.pdb
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\UltimudShared.dll
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\UltimudShared.pdb
-c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\Interfaces.csprojResolveAssemblyReference.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\Interfaces.csproj.AssemblyReference.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\Interfaces.csproj.CoreCompileInputs.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\ultimud\Interfaces\obj\Release\Interfaces.csproj.Up2Date

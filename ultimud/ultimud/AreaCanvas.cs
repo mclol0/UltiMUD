@@ -97,7 +97,12 @@ namespace Ultimud
         public bool Editable
         {
             get { return this.editable_; }
-            set { this.editable_ = value; }
+            set
+            {
+                this.editable_ = value;
+                if (this.editMapBtn_ != null)
+                    this.editMapBtn_.Visible = !value;
+            }
         }
         public Point Mark
         {
@@ -147,13 +152,13 @@ namespace Ultimud
                 switch (value)
                 {
                     case View.Design1:
-                        this.BackColor = Color.DarkGray;
+                        this.BackColor = Color.FromArgb(24, 33, 47);
                         this.gameToolStripMenuItem.Checked = false;
                         this.designexactToolStripMenuItem.Checked = true;
                         this.designfastToolStripMenuItem.Checked = false;
                         break;
                     case View.Design2:
-                        this.BackColor = Color.DarkGray;
+                        this.BackColor = Color.FromArgb(24, 33, 47);
                         this.gameToolStripMenuItem.Checked = false;
                         this.designexactToolStripMenuItem.Checked = false;
                         this.designfastToolStripMenuItem.Checked = true;
@@ -181,6 +186,7 @@ namespace Ultimud
                     case EditModes.Pan: this.Cursor = Cursors.SizeAll; break;
                     case EditModes.Select: this.Cursor = Cursors.Arrow; break;
                 }
+                this.Invalidate();
             }
         }
         #endregion
@@ -192,10 +198,13 @@ namespace Ultimud
         internal event Function_void<object> SelectedEvent;
         internal event Function_void<object> DeselectedEvent;
         internal event Function_void<Area> AreaSelectedEvent;
+        internal event Function_void<Area> EditAreaRequested;
         internal event Function_void UndoAvailable;
         internal event Function_void RedoAvailable;
         internal event Function_void UndoUnavailable;
         internal event Function_void RedoUnavailable;
+
+        ToolStripButton editMapBtn_;
 
         void Selected(object o)
         {
@@ -224,16 +233,68 @@ namespace Ultimud
         public AreaCanvas()
         {
             InitializeComponent();
+            StudioTheme.StyleToolStrip(this.toolStrip1, false);
 
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
+            this.BackColor = Color.FromArgb(24, 33, 47);
 
-            this.toolStripLabel1.Text = null;
+            this.toolStripLabel1.Text = "Tile: 0, 0";
+            this.toolStripLabel1.Font = StudioTheme.FontBold;
+            this.toolStripLabel1.ForeColor = StudioTheme.TextSecondary;
             this.designexactToolStripMenuItem.Checked = true;
+
+            // Insert clear labels and quick navigation buttons into AreaCanvas toolbar
+            ToolStripLabel areaLbl = new ToolStripLabel("🗺️ Area:");
+            areaLbl.Font = StudioTheme.FontBold;
+            this.toolStrip1.Items.Insert(0, areaLbl);
+
+            int zoomIdx = this.toolStrip1.Items.IndexOf(this.toolStripComboBox2);
+            if (zoomIdx >= 0)
+            {
+                ToolStripLabel zoomLbl = new ToolStripLabel("🔍 Zoom:");
+                zoomLbl.Font = StudioTheme.FontBold;
+                this.toolStrip1.Items.Insert(zoomIdx, zoomLbl);
+            }
+
+            this.toolStripDropDownButton2.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            this.toolStripDropDownButton2.Text = "View Mode";
+
+            ToolStripButton centerStartBtn = new ToolStripButton("⌖ Center Start");
+            centerStartBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            centerStartBtn.Font = StudioTheme.FontBold;
+            centerStartBtn.ForeColor = StudioTheme.AccentTeal;
+            centerStartBtn.ToolTipText = "Center map camera on this Area's starting spawn tile";
+            centerStartBtn.Click += delegate
+            {
+                if (this.Area != null)
+                    this.GoTo(this.Area.Start);
+            };
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(centerStartBtn);
+
+            this.editMapBtn_ = new ToolStripButton("✏️ Edit Map && Paint Rooms/Paths");
+            this.editMapBtn_.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            this.editMapBtn_.Font = StudioTheme.FontBold;
+            this.editMapBtn_.ForeColor = StudioTheme.AccentBlue;
+            this.editMapBtn_.ToolTipText = "Open the interactive 2D Map & Area Editor for this Area (or double-click anywhere on the map)";
+            this.editMapBtn_.Visible = !this.editable_;
+            this.editMapBtn_.Click += delegate
+            {
+                if (this.Area != null && this.EditAreaRequested != null)
+                    this.EditAreaRequested(this.Area);
+            };
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            this.toolStrip1.Items.Add(this.editMapBtn_);
 
             if (Server.Instance != null)
                 this.Areas = Server.Instance.GetAreas();
             
             this.MouseWheel += new MouseEventHandler(AreaCanvas_MouseWheel);
+            this.DoubleClick += delegate
+            {
+                if (!this.editable_ && this.Area != null && this.EditAreaRequested != null)
+                    this.EditAreaRequested(this.Area);
+            };
             this.toolStripComboBox2.Items.AddRange(new object[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
             this.toolStripComboBox2.SelectedIndex = 10;
             this.redrawtimer_.Tick += new EventHandler(redrawtimer__Tick);
@@ -305,23 +366,75 @@ namespace Ultimud
             SortedDictionary<int, List<Object>> objects = this.DrawObjects(g);//, this.ClientRectToArea(e.ClipRectangle));
             this.DrawSpecialSymbols(g);
             this.DrawSelectionScreen(g);
+            this.DrawCanvasOverlayBanner(g);
         }
+
+        void DrawCanvasOverlayBanner(Graphics g)
+        {
+            if (this.Height < 90 || this.Width < 260)
+                return;
+
+            string hint;
+            if (!this.Editable)
+            {
+                hint = "🖱️ Drag: Pan  |  Scroll: Zoom  |  Double-Click Map (or click 'Edit Map') to Paint Rooms, Roads & Spawns  |  🟢 Green Circle = Start Tile";
+            }
+            else
+            {
+                string modeDesc = "Pan Camera (Drag map)";
+                if (this.mode_ == EditModes.Select) modeDesc = "Select Object (Left-click tile object)";
+                else if (this.mode_ == EditModes.Move) modeDesc = "Move Selected Object (Drag object)";
+                else if (this.mode_ == EditModes.Manipulate) modeDesc = "Paint / Edit Points (Left-click tiles to paint points • Delete key removes point)";
+                hint = "🛠️ Active Tool: " + modeDesc + "  |  Right-Click Tile: Add Shop / Item Spawn / NPC Spawn / Set Start";
+            }
+
+            Rectangle barRect = new Rectangle(8, this.Height - 30, System.Math.Min(this.Width - 16, 760), 22);
+            using (SolidBrush bg = new SolidBrush(Color.FromArgb(195, 15, 23, 42)))
+            using (Pen border = new Pen(Color.FromArgb(140, 71, 85, 105)))
+            using (SolidBrush fg = new SolidBrush(Color.FromArgb(226, 232, 240)))
+            {
+                g.FillRectangle(bg, barRect);
+                g.DrawRectangle(border, barRect);
+                g.DrawString(hint, StudioTheme.FontSmall, fg, new RectangleF(barRect.X + 8, barRect.Y + 3, barRect.Width - 12, barRect.Height - 4));
+            }
+        }
+
         void DrawGrid(Graphics g)
         {
             switch (this.view_)
             {
                 case View.Design1:
-                    using (Pen pen = new Pen(Color.Gray))
+                    using (Pen pen = new Pen(Color.FromArgb(51, 65, 85)))
                     {
-                        pen.DashPattern = new float[] { 1, this.Zoom - 1 };
                         for (int i = 0; i <= this.Width / this.Zoom; ++i)
                         {
                             float x = i * this.Zoom;
                             g.DrawLine(pen, x, 0, x, this.Height);
                         }
+                        for (int j = 0; j <= this.Height / this.Zoom; ++j)
+                        {
+                            float y = j * this.Zoom;
+                            g.DrawLine(pen, 0, y, this.Width, y);
+                        }
                     }
                     break;
                 case View.Design2:
+                    if (this.Zoom >= 6)
+                    {
+                        using (Pen pen = new Pen(Color.FromArgb(35, 47, 66)))
+                        {
+                            for (int i = 0; i <= this.Width / this.Zoom; ++i)
+                            {
+                                float x = i * this.Zoom;
+                                g.DrawLine(pen, x, 0, x, this.Height);
+                            }
+                            for (int j = 0; j <= this.Height / this.Zoom; ++j)
+                            {
+                                float y = j * this.Zoom;
+                                g.DrawLine(pen, 0, y, this.Width, y);
+                            }
+                        }
+                    }
                     break;
                 case View.Game:
                     Font f = new Font("fixedsys", System.Math.Max((int)(this.Zoom / 1.7), 1), FontStyle.Bold);
@@ -607,7 +720,7 @@ namespace Ultimud
             p = this.PointToClient(MousePosition);
             int x = p.X - (p.X % this.Zoom);
             int y = p.Y - (p.Y % this.Zoom);
-            this.toolStripLabel1.Text = (x / this.Zoom + this.Offset.X) + ", " + (y / this.Zoom + this.Offset.Y);
+            this.toolStripLabel1.Text = "Tile: " + (x / this.Zoom + this.Offset.X) + ", " + (y / this.Zoom + this.Offset.Y);
 
             if (invalidate)
                 this.Invalidate();

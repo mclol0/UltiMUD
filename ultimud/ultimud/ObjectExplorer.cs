@@ -37,16 +37,271 @@ namespace Ultimud
         public event Function_void<User> MonitorUser;
         #endregion
 
+        ToolStripTextBox filterTextBox_;
+        string filterQuery_ = string.Empty;
+
         public ObjectExplorer()
         {
             InitializeComponent();
+            StudioTheme.StyleToolStrip(this.toolStrip1, false);
+            StudioTheme.StyleTreeView(this.treeView1);
             this.EnsureExtraNodes();
+            this.InitSearchAndCloneTools();
             this.treeView1.Nodes[0].Expand();
             this.treeView1.MouseClick += delegate(object sender, MouseEventArgs e)
             {
                 if (e.Button == MouseButtons.Right)
                     this.treeView1.SelectedNode = this.treeView1.GetNodeAt(e.Location);
             };
+            this.treeView1.NodeMouseDoubleClick += new TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
+        }
+
+        void treeView1_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Node == null || e.Node.Tag == null)
+                return;
+
+            object tag = e.Node.Tag;
+            if (tag is Command || tag is Script || tag is Help)
+            {
+                this.OpenCodeOrTextEditor(tag);
+            }
+            else if (tag is Area || tag is Object)
+            {
+                if (this.EditObject != null)
+                    this.EditObject(tag as Object);
+            }
+        }
+
+        public bool OpenCodeOrTextEditor(object target)
+        {
+            if (target is Command)
+            {
+                Command cmd = target as Command;
+                using (Damdai.Forms.TextEditorWindow editor = new Damdai.Forms.TextEditorWindow(true))
+                {
+                    editor.Text = cmd.Script ?? string.Empty;
+                    if (editor.ShowDialog(this.FindForm()) == DialogResult.OK)
+                    {
+                        cmd.Script = editor.Text.Replace("\n", "\r\n").Replace("\r\r\n", "\r\n");
+                        cmd.Save();
+                        return true;
+                    }
+                }
+            }
+            else if (target is Script)
+            {
+                Script scr = target as Script;
+                using (Damdai.Forms.TextEditorWindow editor = new Damdai.Forms.TextEditorWindow(true))
+                {
+                    editor.Text = scr.Code ?? string.Empty;
+                    if (editor.ShowDialog(this.FindForm()) == DialogResult.OK)
+                    {
+                        scr.Code = editor.Text.Replace("\n", "\r\n").Replace("\r\r\n", "\r\n");
+                        if (Server.Instance != null)
+                            Server.Instance.Save();
+                        return true;
+                    }
+                }
+            }
+            else if (target is Help)
+            {
+                Help h = target as Help;
+                using (Damdai.Forms.TextEditorWindow editor = new Damdai.Forms.TextEditorWindow(false))
+                {
+                    editor.Text = h.Text ?? string.Empty;
+                    if (editor.ShowDialog(this.FindForm()) == DialogResult.OK)
+                    {
+                        h.Text = editor.Text.Replace("\n", "\r\n").Replace("\r\r\n", "\r\n");
+                        h.Save();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        void InitSearchAndCloneTools()
+        {
+            if (this.filterTextBox_ != null)
+                return;
+
+            // Add + Create dropdown button on ObjectExplorer toolbar for intuitive 1-click creation
+            ToolStripDropDownButton addBtn = new ToolStripDropDownButton("+ Create");
+            addBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            addBtn.Font = StudioTheme.FontBold;
+            addBtn.ForeColor = StudioTheme.AccentBlue;
+            addBtn.ToolTipText = "Create a new Item, NPC, Ability, Race, Job/Class, Command, Script, or Help topic";
+
+            addBtn.DropDownItems.Add("⚔️ New Item", null, this.newItemToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("🐉 New NPC", null, this.newNpcToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("✨ New Ability / Spell", null, this.newAbilityToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("🛡️ New Playable Race", null, this.newRaceToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("🧙 New Playable Class (Job)", null, this.newJobToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add(new ToolStripSeparator());
+            addBtn.DropDownItems.Add("📜 New Lua Command", null, this.newCommandToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("⚙️ New System Lua Script", null, this.newScriptToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("📖 New Help File", null, this.newHelpFileToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add(new ToolStripSeparator());
+            addBtn.DropDownItems.Add("📊 New Stat Blueprint", null, this.newStatBlueprintToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("🧪 New Status Effect", null, this.newStatusEffectToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("📂 New Ability Group", null, this.newAbilityGroupToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("🏷️ New Tag", null, this.newTagToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add(new ToolStripSeparator());
+            addBtn.DropDownItems.Add("💬 New Chat Channel", null, this.newChannelToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("😊 New Social Emote", null, this.newSocialToolStripMenuItem_Click);
+            addBtn.DropDownItems.Add("📋 New Message Board", null, this.newMessageBoardToolStripMenuItem_Click);
+
+            this.toolStrip1.Items.Insert(0, new ToolStripSeparator());
+            this.toolStrip1.Items.Insert(0, addBtn);
+
+            this.toolStrip1.Items.Add(new ToolStripSeparator());
+            ToolStripLabel searchLbl = new ToolStripLabel("🔍");
+            searchLbl.ToolTipText = "Filter objects by name";
+            this.toolStrip1.Items.Add(searchLbl);
+
+            this.filterTextBox_ = new ToolStripTextBox();
+            this.filterTextBox_.Size = new Size(95, 22);
+            this.filterTextBox_.BackColor = Color.White;
+            this.filterTextBox_.ToolTipText = "Type to filter Commands, Items, NPCs, Abilities, Scripts, Help & Blueprints";
+            this.filterTextBox_.TextChanged += delegate
+            {
+                this.filterQuery_ = (this.filterTextBox_.Text ?? string.Empty).Trim();
+                if (Server.Instance != null)
+                    this.Generate(Server.Instance);
+                if (!string.IsNullOrEmpty(this.filterQuery_))
+                    this.treeView1.ExpandAll();
+            };
+            this.toolStrip1.Items.Add(this.filterTextBox_);
+
+            ToolStripButton clearBtn = new ToolStripButton("×");
+            clearBtn.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            clearBtn.ToolTipText = "Clear search filter";
+            clearBtn.Click += delegate
+            {
+                if (!string.IsNullOrEmpty(this.filterTextBox_.Text))
+                    this.filterTextBox_.Text = string.Empty;
+            };
+            this.toolStrip1.Items.Add(clearBtn);
+
+            // Add Edit Script/Text & Duplicate / Clone to Command, Generic Blueprint, and Help context menus
+            if (this.commandMenuStrip != null && !this.commandMenuStrip.Items.ContainsKey("duplicateCommandItem"))
+            {
+                ToolStripMenuItem editCmd = new ToolStripMenuItem("📝 &Edit Lua Script...");
+                editCmd.Font = StudioTheme.FontBold;
+                editCmd.Click += delegate { if (this.treeView1.SelectedNode != null) this.OpenCodeOrTextEditor(this.treeView1.SelectedNode.Tag); };
+                this.commandMenuStrip.Items.Insert(0, editCmd);
+
+                ToolStripMenuItem dupCmd = new ToolStripMenuItem("📋 &Duplicate / Clone");
+                dupCmd.Name = "duplicateCommandItem";
+                dupCmd.Click += new EventHandler(this.duplicateSelectedNode_Click);
+                this.commandMenuStrip.Items.Insert(1, dupCmd);
+            }
+
+            if (this.genericMenuStrip != null && !this.genericMenuStrip.Items.ContainsKey("duplicateGenericItem"))
+            {
+                ToolStripMenuItem dupGen = new ToolStripMenuItem("📋 &Duplicate / Clone");
+                dupGen.Name = "duplicateGenericItem";
+                dupGen.Click += new EventHandler(this.duplicateSelectedNode_Click);
+                this.genericMenuStrip.Items.Insert(0, dupGen);
+            }
+
+            if (this.helpfileMenuStrip != null && !this.helpfileMenuStrip.Items.ContainsKey("duplicateHelpItem"))
+            {
+                ToolStripMenuItem editHelp = new ToolStripMenuItem("📝 &Edit Help Text...");
+                editHelp.Font = StudioTheme.FontBold;
+                editHelp.Click += delegate { if (this.treeView1.SelectedNode != null) this.OpenCodeOrTextEditor(this.treeView1.SelectedNode.Tag); };
+                this.helpfileMenuStrip.Items.Insert(0, editHelp);
+
+                ToolStripMenuItem dupHelp = new ToolStripMenuItem("📋 &Duplicate / Clone");
+                dupHelp.Name = "duplicateHelpItem";
+                dupHelp.Click += new EventHandler(this.duplicateSelectedNode_Click);
+                this.helpfileMenuStrip.Items.Insert(1, dupHelp);
+            }
+        }
+
+        bool MatchesFilter(string text)
+        {
+            if (string.IsNullOrEmpty(this.filterQuery_))
+                return true;
+            if (string.IsNullOrEmpty(text))
+                return false;
+            return text.IndexOf(this.filterQuery_, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        void duplicateSelectedNode_Click(object sender, EventArgs e)
+        {
+            TreeNode selectedNode = this.treeView1.SelectedNode;
+            if (selectedNode == null || selectedNode.Tag == null || Server.Instance == null)
+                return;
+
+            object tag = selectedNode.Tag;
+            if (tag is Command)
+            {
+                Command src = tag as Command;
+                Command copy = new Command();
+                copy.Name = src.Name + "_copy";
+                copy.Script = src.Script;
+                copy.SystemCommand = src.SystemCommand;
+                copy.Hidden = src.Hidden;
+                copy.Priority = src.Priority;
+                copy.CanUseIncapacitated = src.CanUseIncapacitated;
+                if (src.Aliases != null)
+                    copy.Aliases = new List<string>(src.Aliases);
+                Command.Commands.Add(copy);
+                copy.Save();
+                this.AddTreeNode(this.treeView1.Nodes["server"].Nodes["commands"], copy, this.commandMenuStrip);
+                if (this.ObjectSelected != null) this.ObjectSelected(copy);
+            }
+            else if (tag is Help)
+            {
+                Help src = tag as Help;
+                Help copy = new Help(src.Name + "_COPY", src.Text);
+                Help.HelpFiles.Add(copy);
+                copy.Save();
+                this.AddTreeNode(this.treeView1.Nodes["server"].Nodes["help"], copy, this.helpfileMenuStrip);
+                if (this.ObjectSelected != null) this.ObjectSelected(copy);
+            }
+            else if (tag is IIdentifiable)
+            {
+                try
+                {
+                    // Deep clone via binary memory serialization
+                    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                    {
+                        System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                        bf.Binder = new Server.SerializationBinder();
+                        bf.Serialize(ms, tag);
+                        ms.Position = 0;
+                        IIdentifiable copy = bf.Deserialize(ms) as IIdentifiable;
+                        if (copy != null)
+                        {
+                            copy.Id = Server.Instance.NewGuid();
+                            copy.Name = (copy.Name ?? "Object") + " Copy";
+                            Server.Instance.DataSets[copy.GetType()][copy.Id] = copy;
+                            this.AddTreeNode(selectedNode.Parent, copy, this.genericMenuStrip);
+                            Server.Instance.Save();
+                            if (this.ObjectSelected != null) this.ObjectSelected(copy);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, "Could not duplicate object: " + ex.Message, "Duplicate Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+
+        public void SelectObjectInTree(object target)
+        {
+            if (target == null)
+                return;
+            TreeNode found = this.GetTreeNode(target);
+            if (found != null)
+            {
+                this.treeView1.SelectedNode = found;
+                found.EnsureVisible();
+            }
         }
 
         void EnsureExtraNodes()
@@ -164,6 +419,8 @@ namespace Ultimud
             commands.Sort(delegate(Command c1, Command c2) { return string.Compare(c1.Name, c2.Name); });
             foreach (Command cmd in commands)
             {
+                if (!this.MatchesFilter(cmd.ToString()))
+                    continue;
                 TreeNode n = new TreeNode(cmd.ToString(), parentnode.ImageIndex, parentnode.SelectedImageIndex);
                 n.Tag = cmd;
                 n.ContextMenuStrip = this.commandMenuStrip;
@@ -179,6 +436,8 @@ namespace Ultimud
             list.Sort(delegate(User c1, User c2) { return string.Compare(c1.ToString(), c2.ToString()); });
             foreach (User u in list)
             {
+                if (!this.MatchesFilter(u.ToString()))
+                    continue;
                 TreeNode n = new TreeNode(u.ToString(), parentnode.ImageIndex, parentnode.SelectedImageIndex);
                 n.Tag = u;
                 n.ContextMenuStrip = this.playerMenuStrip;
@@ -194,6 +453,8 @@ namespace Ultimud
             list.Sort(delegate(Help c1, Help c2) { return string.Compare(c1.Name, c2.Name); });
             foreach (Help help in list)
             {
+                if (!this.MatchesFilter(help.Name))
+                    continue;
                 TreeNode n = new TreeNode(help.Name, parentnode.ImageIndex, parentnode.SelectedImageIndex);
                 n.Tag = help;
                 n.ContextMenuStrip = this.helpfileMenuStrip;
@@ -211,6 +472,8 @@ namespace Ultimud
             list.Sort(delegate(IIdentifiable c1, IIdentifiable c2) { return string.Compare(c1.Name, c2.Name); });
             foreach (T t in list)
             {
+                if (!this.MatchesFilter(t.Name))
+                    continue;
                 TreeNode n = new TreeNode(t.Name, parentnode.ImageIndex, parentnode.SelectedImageIndex);
                 n.Tag = t;
                 n.ContextMenuStrip = this.genericMenuStrip;
@@ -563,6 +826,51 @@ namespace Ultimud
         private void newTagToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.NewGenericObject<Tag>(this.treeView1.Nodes["server"].Nodes["tags"]);
+        }
+
+        public void CreateNewItem() { this.newItemToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewNpc() { this.newNpcToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewAbility() { this.newAbilityToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewRace() { this.newRaceToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewJob() { this.newJobToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewCommand() { this.newCommandToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewScript() { this.newScriptToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewHelp() { this.newHelpFileToolStripMenuItem_Click(this, EventArgs.Empty); }
+        public void CreateNewStat() { this.newStatBlueprintToolStripMenuItem_Click(this, EventArgs.Empty); }
+
+        public void DuplicateSelectedObject()
+        {
+            this.duplicateSelectedNode_Click(this, EventArgs.Empty);
+        }
+
+        public void DeleteSelectedObject()
+        {
+            TreeNode selectednode = this.treeView1.SelectedNode;
+            if (selectednode == null || selectednode.Tag == null)
+                return;
+            if (this.GetRootNode(selectednode) == this.treeView1.Nodes["server"].Nodes["world"])
+            {
+                MessageBox.Show(this, "World map objects are deleted inside the Area Editor.", "Delete in Area Editor", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (MessageBox.Show(this, "Delete " + selectednode.Tag.ToString() + "?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                if (selectednode.Tag is Command)
+                    this.DeleteCommand(selectednode.Tag as Command, selectednode);
+                else if (selectednode.Tag is Help)
+                    this.DeleteHelp(selectednode.Tag as Help, selectednode);
+                else if (selectednode.Tag is IIdentifiable)
+                {
+                    if (selectednode.Tag is StatBlueprint && (selectednode.Tag as StatBlueprint).IsPermanent)
+                    {
+                        MessageBox.Show(this, "This stat blueprint is permanent and cannot be deleted.", "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+                    Server.Instance.DataSets[selectednode.Tag.GetType()].Remove(((IIdentifiable)selectednode.Tag).Id);
+                    this.RemoveTreeNode(selectednode);
+                    if (this.ObjectSelected != null) this.ObjectSelected(null);
+                }
+            }
         }
     }
 }

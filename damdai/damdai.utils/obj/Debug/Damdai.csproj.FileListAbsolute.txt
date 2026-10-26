@@ -1,5 +1,6 @@
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\RELEASE\Damdai.dll
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\RELEASE\Damdai.pdb
-c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Debug\Damdai.csprojResolveAssemblyReference.cache
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Debug\Damdai.dll
 c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Debug\Damdai.pdb
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Debug\Damdai.csproj.AssemblyReference.cache
+c:\Users\nsasu\OneDrive\Desktop\UltiMUD\Damdai\Damdai.Utils\obj\Debug\Damdai.csproj.CoreCompileInputs.cache
